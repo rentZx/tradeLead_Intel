@@ -215,3 +215,5 @@ python -c "from streamlit.testing.v1 import AppTest; app=AppTest.from_file('app.
 - `.env.example` 已提供。
 - `requirements.txt` 已包含当前运行所需依赖。
 - 版本号已标记为 `V2.0-RC1`。
+
+<!-- Auto-deploy test: Wed, Jul  8, 2026  7:36:53 PM -->
