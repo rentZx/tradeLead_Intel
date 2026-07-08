@@ -17,7 +17,8 @@ jobs:
           script: |
             cd /opt/apps/tradelead-intel
             git config core.sshCommand "ssh -i /home/ubuntu/.ssh/tradelead_intel_key -o StrictHostKeyChecking=accept-new"
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             source .venv/bin/activate
             pip install -r requirements.txt
             python3 -c "import sqlite3; conn=sqlite3.connect('data/tradelead.sqlite3'); conn.executescript(open('schema.sql').read()); conn.close()" 2>/dev/null || true
