@@ -15,7 +15,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/ubuntu/tradelead-intel
+            cd /opt/apps/tradelead-intel
             git pull origin main
             source .venv/bin/activate
             pip install -r requirements.txt
