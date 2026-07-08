@@ -37,27 +37,105 @@ from src.search import (
     save_search_results,
     update_task_counts,
 )
+from src.ui_styles import (
+    C_PRIMARY,
+    C_SUCCESS,
+    C_WARNING,
+    C_DANGER,
+    C_TEXT_MUTED,
+    GRADE_COLORS,
+    inject_css,
+    main_header,
+    page_header,
+    sidebar_group,
+    sidebar_footer,
+    metric_card,
+    callout,
+    grade_badge,
+)
 from src.webpage_reader import companies_with_websites, read_company_website
 
 APP_VERSION = "V2.0-RC1"
 
-st.set_page_config(page_title="TradeLead Intel", page_icon="T", layout="wide")
+st.set_page_config(page_title="TradeLead Intel", page_icon="🌐", layout="wide")
 init_db()
 
 
+# ---------------------------------------------------------------------------
+# 侧边栏导航配置
+# ---------------------------------------------------------------------------
+NAV_GROUPS = [
+    ("📊 概览", ["📊 首页仪表盘"]),
+    ("📦 产品与线索", ["📦 产品库", "🏢 公司线索库", "🎭 演示数据"]),
+    ("🔍 搜索与采集", ["🔍 搜索任务", "🚀 自动搜索", "🌐 官网读取"]),
+    ("⚠️ 风控与背调", ["⚠️ 合规风险中心", "📋 背调报告"]),
+    ("💬 营销与跟进", ["📄 落地页/询盘", "✉️ 开发信生成器", "💬 CRM跟进"]),
+    ("⚙️ 系统", ["⚙️ 系统设置"]),
+]
+
+# 页面 -> (icon, color) 映射，用于 page_header
+PAGE_META = {
+    "首页仪表盘": ("dashboard", C_PRIMARY),
+    "产品库": ("box", C_PRIMARY),
+    "公司线索库": ("building", C_PRIMARY),
+    "演示数据": ("flask", "#8b5cf6"),
+    "搜索任务": ("search", C_PRIMARY),
+    "自动搜索": ("rocket", C_PRIMARY),
+    "官网读取": ("globe", C_PRIMARY),
+    "合规风险中心": ("shield", C_DANGER),
+    "背调报告": ("clipboard-check", C_WARNING),
+    "落地页/询盘": ("file-text", C_PRIMARY),
+    "开发信生成器": ("mail", C_PRIMARY),
+    "CRM跟进": ("message-circle", C_PRIMARY),
+    "系统设置": ("settings", C_TEXT_MUTED),
+}
+
+
 def main() -> None:
-    st.title("TradeLead Intel 外贸线索情报系统")
-    st.caption(f"{APP_VERSION}｜产品库 - 搜索任务 - 线索库 - 背调评分 - 开发信 - CRM。本地版，不自动群发、不绕过访问限制。")
+    inject_css()
+    main_header("TradeLead Intel", f"{APP_VERSION} ｜ 外贸线索情报系统 · 本地版")
 
-    page = st.sidebar.radio(
-        "导航",
-        ["首页仪表盘", "产品库", "演示数据", "搜索任务", "自动搜索", "官网读取", "合规风险中心", "产品落地页/询盘", "公司线索库", "背调报告", "开发信生成器", "CRM跟进", "系统设置"],
-    )
+    # ---- 侧边栏分组导航 ----
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = "首页仪表盘"
 
+    all_pages: list[str] = []
+    for _, pages in NAV_GROUPS:
+        all_pages.extend(pages)
+
+    # 如果 session_state 中的页面不在列表中，重置为首页
+    current = st.session_state.current_page
+    if current not in all_pages:
+        current = "首页仪表盘"
+        st.session_state.current_page = current
+
+    # 渲染分组
+    selected = None
+    for group_title, pages in NAV_GROUPS:
+        sidebar_group(group_title)
+        for page_label in pages:
+            page_name = page_label.split(" ", 1)[1] if " " in page_label else page_label
+            is_active = page_name == current
+            btn_type = "primary" if is_active else "secondary"
+            if st.sidebar.button(
+                page_label,
+                key=f"nav_{page_name}",
+                use_container_width=True,
+                type=btn_type,
+            ):
+                st.session_state.current_page = page_name
+                st.rerun()
+
+    sidebar_footer(APP_VERSION)
+
+    # ---- 页面路由 ----
+    page = st.session_state.current_page
     if page == "首页仪表盘":
         dashboard_page()
     elif page == "产品库":
         products_page()
+    elif page == "公司线索库":
+        companies_page()
     elif page == "演示数据":
         demo_data_page()
     elif page == "搜索任务":
@@ -68,12 +146,10 @@ def main() -> None:
         webpage_reader_page()
     elif page == "合规风险中心":
         compliance_center_page()
-    elif page == "产品落地页/询盘":
-        landing_pages_page()
-    elif page == "公司线索库":
-        companies_page()
     elif page == "背调报告":
         due_diligence_page()
+    elif page == "落地页/询盘":
+        landing_pages_page()
     elif page == "开发信生成器":
         outreach_page()
     elif page == "CRM跟进":
@@ -83,20 +159,31 @@ def main() -> None:
 
 
 def dashboard_page() -> None:
-    cols = st.columns(5)
-    metrics = {
-        "产品": "SELECT COUNT(*) AS n FROM products",
-        "线索公司": "SELECT COUNT(*) AS n FROM companies",
-        "已背调": "SELECT COUNT(*) AS n FROM due_diligence",
-        "A/B客户": "SELECT COUNT(*) AS n FROM companies WHERE final_grade IN ('A','B')",
-        "风险线索": "SELECT COUNT(*) AS n FROM companies WHERE risk_status != '未筛查'",
-    }
-    for col, (label, sql) in zip(cols, metrics.items()):
-        col.metric(label, int(query_df(sql).iloc[0]["n"]))
+    icon, color = PAGE_META["首页仪表盘"]
+    page_header(icon, "首页仪表盘", color)
 
-    left, right = st.columns([1.2, 1])
+    # ---- 指标卡片 ----
+    metrics = [
+        ("产品总数", "SELECT COUNT(*) AS n FROM products", C_PRIMARY),
+        ("线索公司", "SELECT COUNT(*) AS n FROM companies", C_SUCCESS),
+        ("已背调", "SELECT COUNT(*) AS n FROM due_diligence", "#8b5cf6"),
+        ("A/B 客户", "SELECT COUNT(*) AS n FROM companies WHERE final_grade IN ('A','B')", C_SUCCESS),
+        ("风险线索", "SELECT COUNT(*) AS n FROM companies WHERE risk_status != '未筛查'", C_DANGER),
+    ]
+    cols = st.columns(5)
+    cards_html = ""
+    for i, (label, sql, accent) in enumerate(metrics):
+        val = int(query_df(sql).iloc[0]["n"])
+        cards_html += f'<div style="flex:1;min-width:0;padding:0 0.4rem;">{metric_card(label, val, accent)}</div>'
+    st.markdown(
+        f'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">{cards_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+    left, right = st.columns([1.3, 1])
+
     with left:
-        st.subheader("最近公司线索")
+        st.markdown("##### 📋 最近公司线索")
         st.dataframe(
             query_df(
                 """
@@ -107,18 +194,64 @@ def dashboard_page() -> None:
             width="stretch",
             hide_index=True,
         )
-    with right:
-        st.subheader("合规提醒")
-        st.info(
-            "涉及机床、工业设备、二手设备、高精度设备、数控设备、塑料机械时，"
-            "请人工核查 HS 编码、技术参数、最终用途、最终用户和出口申报要求。"
+
+        st.markdown("##### 📊 评级分布")
+        grade_df = query_df(
+            """
+            SELECT COALESCE(final_grade, '未评级') AS grade, COUNT(*) AS cnt
+            FROM companies
+            GROUP BY final_grade
+            ORDER BY grade
+            """
         )
-        st.warning("系统只辅助整理和判断。所有联系、报价、成交和合规决策必须由用户人工确认。")
+        if not grade_df.empty:
+            grade_html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
+            for _, row in grade_df.iterrows():
+                g = row["grade"]
+                cnt = int(row["cnt"])
+                color = GRADE_COLORS.get(g, "#94a3b8")
+                grade_html += (
+                    f'<div style="background:{color}15;border:1px solid {color}30;'
+                    f'border-radius:0.5rem;padding:0.4rem 0.8rem;display:flex;'
+                    f'align-items:center;gap:0.4rem;">'
+                    f'<span style="background:{color};color:white;width:1.5rem;height:1.5rem;'
+                    f'border-radius:0.35rem;display:flex;align-items:center;justify-content:center;'
+                    f'font-weight:800;font-size:0.8rem;">{g}</span>'
+                    f'<span style="font-weight:700;color:{color};">{cnt}</span>'
+                    f"</div>"
+                )
+            grade_html += "</div>"
+            st.markdown(grade_html, unsafe_allow_html=True)
+        else:
+            st.caption("暂无评级数据")
+
+    with right:
+        st.markdown("##### ⚖️ 合规提醒")
+        callout(
+            "涉及机床、工业设备、二手设备、高精度设备、数控设备、塑料机械时，"
+            "请人工核查 HS 编码、技术参数、最终用途、最终用户和出口申报要求。",
+            "info",
+        )
+        callout(
+            "系统只辅助整理和判断。所有联系、报价、成交和合规决策必须由用户人工确认。",
+            "warning",
+        )
+
+        st.markdown("##### 📈 快速操作")
+        col_a, col_b, col_c = st.columns(3)
+        col_a.button("📦 产品库", use_container_width=True, on_click=lambda: st.session_state.update(current_page="产品库"))
+        col_b.button("🔍 搜索", use_container_width=True, on_click=lambda: st.session_state.update(current_page="自动搜索"))
+        col_c.button("📋 背调", use_container_width=True, on_click=lambda: st.session_state.update(current_page="背调报告"))
+        col_d, col_e, col_f = st.columns(3)
+        col_d.button("🏢 线索库", use_container_width=True, on_click=lambda: st.session_state.update(current_page="公司线索库"))
+        col_e.button("✉️ 开发信", use_container_width=True, on_click=lambda: st.session_state.update(current_page="开发信生成器"))
+        col_f.button("💬 CRM", use_container_width=True, on_click=lambda: st.session_state.update(current_page="CRM跟进"))
 
 
 def products_page() -> None:
-    st.subheader("产品资料库")
-    with st.expander("新增产品", expanded=True):
+    icon, color = PAGE_META["产品库"]
+    page_header(icon, "产品资料库", color)
+    with st.expander("➕ 新增产品", expanded=True):
         with st.form("product_form", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
             product_name_cn = c1.text_input("中文产品名 *")
@@ -186,22 +319,26 @@ def products_page() -> None:
 
 
 def demo_data_page() -> None:
-    st.subheader("演示数据生成")
-    st.caption("生成的数据均带有 DEMO_DATA / demo 标记，并明确注明“演示数据，不可用于真实联系”。清空按钮只删除演示数据，不影响真实数据。")
+    icon, color = PAGE_META["演示数据"]
+    page_header(icon, "演示数据", color)
+    st.caption("生成的数据均带有 DEMO_DATA / demo 标记，并明确注明「演示数据，不可用于真实联系」。清空按钮只删除演示数据，不影响真实数据。")
     counts = demo_counts()
     cols = st.columns(5)
     for col, (label, value) in zip(cols, counts.items()):
         col.metric(label, value)
 
-    st.warning("演示公司和询盘中的邮箱、电话、WhatsApp、Telegram 均为测试数据，不可用于真实联系。")
+    callout(
+        "演示公司和询盘中的邮箱、电话、WhatsApp、Telegram 均为测试数据，不可用于真实联系。",
+        "warning",
+    )
     c1, c2 = st.columns(2)
-    if c1.button("生成演示数据", type="primary"):
+    if c1.button("生成演示数据", type="primary", use_container_width=True):
         stats = generate_demo_data()
         st.success(
             f"演示数据已生成：产品 {stats['products']} 条，公司 {stats['companies']} 条，"
             f"风险名单 {stats['sanctions_entities']} 条，询盘 {stats['inquiries']} 条，CRM跟进 {stats['interactions']} 条。"
         )
-    if c2.button("清空演示数据"):
+    if c2.button("清空演示数据", use_container_width=True):
         deleted = clear_demo_data()
         st.success(
             f"已清空演示数据：产品 {deleted['products']} 条，公司 {deleted['companies']} 条，"
@@ -225,7 +362,8 @@ def demo_data_page() -> None:
 
 
 def tasks_page() -> None:
-    st.subheader("搜索任务管理")
+    icon, color = PAGE_META["搜索任务"]
+    page_header(icon, "搜索任务管理", color)
     products = get_options("products")
     with st.form("task_form", clear_on_submit=True):
         c1, c2 = st.columns(2)
@@ -257,11 +395,12 @@ def tasks_page() -> None:
 
 
 def auto_search_page() -> None:
-    st.subheader("自动搜索")
+    icon, color = PAGE_META["自动搜索"]
+    page_header(icon, "自动搜索", color)
     st.caption("根据产品、国家和语言生成关键词，通过配置的搜索 API 获取结果，保存到 V2.0 search_queries/search_results。")
     products = get_options("products")
     if not products:
-        st.info("请先在产品库新增至少一个产品。")
+        callout("请先在产品库新增至少一个产品。", "info")
         return
 
     with st.form("auto_search_form"):
@@ -274,7 +413,7 @@ def auto_search_page() -> None:
         api_key = c3.text_input("API Key（可留空读取环境变量）", type="password")
         endpoint = c1.text_input("Bing Endpoint（可选）", value="")
         cse_id = c2.text_input("Google CSE ID（Google_CSE 使用）", value="")
-        run_button = st.form_submit_button("生成关键词并执行搜索")
+        run_button = st.form_submit_button("生成关键词并执行搜索", type="primary")
 
     product_id = products[product_label]
     product = query_df("SELECT * FROM products WHERE id = ?", (product_id,)).iloc[0].to_dict()
@@ -369,19 +508,20 @@ def auto_search_page() -> None:
         for row in results_df.itertuples(index=False)
         if int(row.is_company_site or 0) == 1 and int(row.is_duplicate or 0) == 0 and int(row.imported_to_companies or 0) == 0
     ]
-    if st.button("一键导入当前未重复公司站点到线索库", disabled=not eligible_ids):
+    if st.button("一键导入当前未重复公司站点到线索库", disabled=not eligible_ids, type="primary"):
         stats = import_search_results_to_companies(import_product_id, eligible_ids)
         st.success(f"已导入 {stats['imported']} 条，已存在跳过 {stats['skipped_existing']} 条。")
 
 
 def webpage_reader_page() -> None:
-    st.subheader("官网读取")
+    icon, color = PAGE_META["官网读取"]
+    page_header(icon, "官网读取", color)
     st.caption("批量读取公司官网公开页面，提取正文、邮箱、电话、WhatsApp、Telegram 和社交媒体链接，保存到 webpage_snapshots。")
 
     only_not_read = st.checkbox("只显示尚未读取过官网的公司", value=True)
     company_rows = companies_with_websites(only_not_read=only_not_read)
     if not company_rows:
-        st.info("暂无可读取官网的公司线索。请先在公司线索库录入 website，或从自动搜索结果导入公司。")
+        callout("暂无可读取官网的公司线索。请先在公司线索库录入 website，或从自动搜索结果导入公司。", "info")
         snapshots_df = query_df(
             """
             SELECT id, company_id, url, page_type, http_status, fetch_status, error_message, fetched_at
@@ -398,7 +538,7 @@ def webpage_reader_page() -> None:
     c1, c2, c3 = st.columns(3)
     max_pages = c1.number_input("每家公司最多读取页面数", min_value=1, max_value=9, value=4, step=1)
     timeout = c2.number_input("单页超时秒数", min_value=5, max_value=60, value=15, step=5)
-    run_button = c3.button("开始批量读取", disabled=not selected_labels)
+    run_button = c3.button("开始批量读取", disabled=not selected_labels, type="primary")
 
     preview_df = query_df(
         """
@@ -456,16 +596,26 @@ def webpage_reader_page() -> None:
 
 
 def compliance_center_page() -> None:
-    st.subheader("合规风险中心")
+    icon, color = PAGE_META["合规风险中心"]
+    page_header(icon, "合规风险中心", color)
     st.caption("导入制裁名单 CSV，使用 rapidfuzz 对公司名称做模糊匹配，并将高风险客户自动标记为风险池。")
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("制裁实体", int(query_df("SELECT COUNT(*) AS n FROM sanctions_entities").iloc[0]["n"]))
-    c2.metric("风险关键词", int(query_df("SELECT COUNT(*) AS n FROM risk_keywords").iloc[0]["n"]))
-    c3.metric("公司线索", int(query_df("SELECT COUNT(*) AS n FROM companies").iloc[0]["n"]))
-    c4.metric("风险池客户", len(risk_pool_df()))
+    # ---- 指标卡片 ----
+    metrics = [
+        ("制裁实体", "SELECT COUNT(*) AS n FROM sanctions_entities", C_DANGER),
+        ("风险关键词", "SELECT COUNT(*) AS n FROM risk_keywords", C_WARNING),
+        ("公司线索", "SELECT COUNT(*) AS n FROM companies", C_PRIMARY),
+        ("风险池客户", None, C_DANGER),
+    ]
+    cols = st.columns(4)
+    for i, (label, sql, accent) in enumerate(metrics):
+        if sql:
+            val = int(query_df(sql).iloc[0]["n"])
+        else:
+            val = len(risk_pool_df())
+        cols[i].metric(label, val)
 
-    tab1, tab2, tab3 = st.tabs(["制裁名单导入", "风险筛查", "风险池"])
+    tab1, tab2, tab3 = st.tabs(["📋 制裁名单导入", "🔍 风险筛查", "⚠️ 风险池"])
 
     with tab1:
         uploaded = st.file_uploader("上传制裁名单 CSV", type=["csv"], key="sanctions_csv")
@@ -474,7 +624,7 @@ def compliance_center_page() -> None:
             try:
                 sanctions_df = pd.read_csv(uploaded)
                 st.dataframe(sanctions_df.head(50), width="stretch", hide_index=True)
-                if st.button("导入制裁名单"):
+                if st.button("导入制裁名单", type="primary"):
                     count = import_sanctions_csv(sanctions_df, source_default=source_default)
                     st.success(f"已导入 {count} 条制裁实体。")
             except Exception as exc:
@@ -489,8 +639,8 @@ def compliance_center_page() -> None:
             st.success(f"已新增 {inserted} 条风险关键词。")
         threshold = right.slider("制裁名单模糊匹配阈值", min_value=70, max_value=100, value=88, step=1)
         include_keyword_screen = st.checkbox("同时使用高风险关键词筛查公司资料", value=True)
-        st.warning("高风险命中只代表需要人工复核；系统不提供规避制裁、出口管制或报关监管的方案。")
-        if st.button("执行合规筛查"):
+        callout("高风险命中只代表需要人工复核；系统不提供规避制裁、出口管制或报关监管的方案。", "danger")
+        if st.button("执行合规筛查", type="primary"):
             stats = screen_companies(threshold=int(threshold), include_keyword_screen=include_keyword_screen)
             st.success(
                 f"筛查完成：公司 {stats['screened']} 家，制裁模糊命中 {stats['sanctions_matches']} 条，"
@@ -514,7 +664,7 @@ def compliance_center_page() -> None:
         st.dataframe(pool_df, width="stretch", hide_index=True)
         if not pool_df.empty:
             st.download_button(
-                "导出风险池 CSV",
+                "📥 导出风险池 CSV",
                 pool_df.to_csv(index=False).encode("utf-8-sig"),
                 "risk_pool.csv",
                 "text/csv",
@@ -522,15 +672,16 @@ def compliance_center_page() -> None:
 
 
 def landing_pages_page() -> None:
-    st.subheader("产品落地页与询盘管理")
+    icon, color = PAGE_META["落地页/询盘"]
+    page_header(icon, "产品落地页与询盘管理", color)
     st.caption("选择产品和语言生成静态 HTML 产品页；页面询盘表单提交后写入 inquiries，并可转入 CRM。")
 
     products = get_options("products")
-    tab1, tab2 = st.tabs(["产品落地页", "询盘管理"])
+    tab1, tab2 = st.tabs(["📄 产品落地页", "📨 询盘管理"])
 
     with tab1:
         if not products:
-            st.info("请先在产品库新增产品。")
+            callout("请先在产品库新增产品。", "info")
         else:
             c1, c2, c3 = st.columns(3)
             product_label = c1.selectbox("产品", list(products.keys()))
@@ -538,15 +689,16 @@ def landing_pages_page() -> None:
             port = c3.number_input("询盘服务端口", min_value=8000, max_value=9999, value=DEFAULT_PORT, step=1)
             product_id = products[product_label]
             product = query_df("SELECT * FROM products WHERE id = ?", (product_id,)).iloc[0].to_dict()
-            if st.button("启动询盘接收服务"):
+            c1_btn, c2_btn = st.columns(2)
+            if c1_btn.button("启动询盘接收服务", use_container_width=True):
                 url = start_inquiry_server(int(port))
                 st.success(f"询盘接收服务已启动：{url}")
-            if st.button("生成静态HTML产品页"):
+            if c2_btn.button("生成静态HTML产品页", type="primary", use_container_width=True):
                 start_inquiry_server(int(port))
                 path = generate_landing_page(product, language, int(port))
                 url = landing_page_url(path, int(port))
                 st.success("产品落地页已生成。")
-                st.markdown(f"[打开产品页]({url})")
+                st.markdown(f"[🔗 打开产品页]({url})")
                 st.code(str(path), language="text")
             st.markdown("**产品页预览数据**")
             st.json(
@@ -591,14 +743,14 @@ def landing_pages_page() -> None:
             selected = st.selectbox("选择询盘", list(inquiry_options.keys()))
             col_a, col_b, col_c = st.columns(3)
             new_status = col_a.selectbox("更新状态", ["New", "Reviewed", "Replied", "Quoted", "Converted", "Closed"])
-            if col_b.button("保存状态"):
+            if col_b.button("保存状态", use_container_width=True):
                 update("UPDATE inquiries SET status = ? WHERE id = ?", (new_status, inquiry_options[selected]))
                 st.success("询盘状态已更新。")
-            if col_c.button("转入CRM"):
+            if col_c.button("转入CRM", type="primary", use_container_width=True):
                 company_id = convert_inquiry_to_crm(inquiry_options[selected])
                 st.success(f"已转入 CRM，公司ID：{company_id}")
         st.download_button(
-            "导出询盘 CSV",
+            "📥 导出询盘 CSV",
             inquiries_df.to_csv(index=False).encode("utf-8-sig"),
             "inquiries.csv",
             "text/csv",
@@ -607,9 +759,10 @@ def landing_pages_page() -> None:
 
 
 def companies_page() -> None:
-    st.subheader("候选公司线索库")
+    icon, color = PAGE_META["公司线索库"]
+    page_header(icon, "候选公司线索库", color)
     products = get_options("products")
-    with st.expander("手动录入公司", expanded=True):
+    with st.expander("➕ 手动录入公司", expanded=True):
         with st.form("company_form", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
             company_name = c1.text_input("公司名称 *")
@@ -622,7 +775,7 @@ def companies_page() -> None:
             business_summary = st.text_area("业务摘要")
             source_url = st.text_input("来源URL")
             match_keywords = st.text_input("匹配关键词")
-            submitted = st.form_submit_button("保存线索")
+            submitted = st.form_submit_button("保存线索", type="primary")
         if submitted:
             if not company_name:
                 st.error("请填写公司名称。")
@@ -642,10 +795,11 @@ def companies_page() -> None:
 
 
 def due_diligence_page() -> None:
-    st.subheader("公司背调与客户评分")
+    icon, color = PAGE_META["背调报告"]
+    page_header(icon, "公司背调与客户评分", color)
     companies = get_options("companies", "company_name")
     if not companies:
-        st.info("请先录入候选公司。")
+        callout("请先录入候选公司。", "info")
         return
 
     company_label = st.selectbox("选择公司", list(companies.keys()))
@@ -667,7 +821,7 @@ def due_diligence_page() -> None:
         (company_id,),
     )
     if snapshot_df.empty:
-        st.info("还没有官网读取快照。建议先到“官网读取”页面读取公开网页，背调报告会更有证据链。")
+        callout("还没有官网读取快照。建议先到「官网读取」页面读取公开网页，背调报告会更有证据链。", "info")
     else:
         with st.expander("已读取网页快照", expanded=False):
             st.dataframe(snapshot_df, width="stretch", hide_index=True)
@@ -701,11 +855,32 @@ def due_diligence_page() -> None:
                 "contactability_score": contactability,
             },
         )
-    st.markdown("**风险命中**")
+    st.markdown("**⚠️ 风险命中**")
     st.code(format_risk_hits(hits))
-    m1, m2 = st.columns(2)
-    m1.metric("总分", score["final_score"], f"评级 {score['final_grade']}")
-    m2.metric("整体置信度", diligence["confidence_score"])
+
+    # ---- 评分展示卡片 ----
+    grade = score["final_grade"]
+    grade_color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
+    m1, m2, m3 = st.columns(3)
+    m1.markdown(
+        f"""
+        <div style="background:#ffffff;border:1px solid {C_BORDER};
+        border-radius:0.75rem;padding:1rem 1.25rem;text-align:center;
+        box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div style="color:{C_TEXT_MUTED};font-size:0.75rem;font-weight:600;
+            text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.5rem;">总分</div>
+            <div style="font-size:2.5rem;font-weight:800;color:{grade_color};line-height:1;">
+            {score["final_score"]}</div>
+            <div style="margin-top:0.4rem;">
+                <span style="background:{grade_color};color:white;padding:0.2rem 0.8rem;
+                border-radius:0.4rem;font-weight:700;font-size:0.9rem;">评级 {grade}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    m2.metric("风险扣分", score["risk_score"])
+    m3.metric("整体置信度", diligence["confidence_score"])
 
     evidence_df = pd.DataFrame(diligence["evidence"])
     st.markdown("**分项评分理由与证据链**")
@@ -717,7 +892,7 @@ def due_diligence_page() -> None:
     st.text_area("来源URL", value="\n".join(diligence["source_urls"]), height=100)
     ai_report = st.text_area("背调报告草稿", value=diligence["report"], height=360)
     recommendation = st.selectbox("建议", ["优先开发", "可跟进", "暂缓", "人工合规复核", "拉黑/不开发"])
-    if st.button("保存背调报告"):
+    if st.button("保存背调报告", type="primary"):
         execute(
             """
             INSERT INTO due_diligence (
@@ -761,11 +936,12 @@ def due_diligence_page() -> None:
 
 
 def outreach_page() -> None:
-    st.subheader("开发信与联系话术生成器")
+    icon, color = PAGE_META["开发信生成器"]
+    page_header(icon, "开发信与联系话术生成器", color)
     companies = get_options("companies", "company_name")
     products = get_options("products")
     if not companies or not products:
-        st.info("请先录入产品和公司。")
+        callout("请先录入产品和公司。", "info")
         return
     c1, c2, c3 = st.columns(3)
     company_label = c1.selectbox("客户", list(companies.keys()))
@@ -780,8 +956,8 @@ def outreach_page() -> None:
     followup_1 = st.text_area("第一次跟进", value=draft["followup_1"], height=80)
     followup_2 = st.text_area("第二次跟进", value=draft["followup_2"], height=80)
     quote_followup = st.text_area("报价后跟进", value=draft["quote_followup"], height=80)
-    st.warning("以上内容仅为草稿。发送前请人工确认客户身份、产品信息、出口合规和目标市场邮件规则。")
-    if st.button("保存话术"):
+    callout("以上内容仅为草稿。发送前请人工确认客户身份、产品信息、出口合规和目标市场邮件规则。", "warning")
+    if st.button("保存话术", type="primary"):
         execute(
             """
             INSERT INTO outreach_templates(company_id, product_id, language, channel, email_subject, email_body, whatsapp_message, followup_1, followup_2, quote_followup)
@@ -794,11 +970,12 @@ def outreach_page() -> None:
 
 
 def crm_page() -> None:
-    st.subheader("CRM跟进管理")
+    icon, color = PAGE_META["CRM跟进"]
+    page_header(icon, "CRM跟进管理", color)
     companies = get_options("companies", "company_name")
     products = get_options("products")
     if not companies:
-        st.info("请先录入公司线索。")
+        callout("请先录入公司线索。", "info")
         return
     with st.form("interaction_form", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
@@ -812,7 +989,7 @@ def crm_page() -> None:
         customer_reply = st.text_area("客户回复")
         result = st.text_input("结果")
         notes = st.text_area("备注")
-        submitted = st.form_submit_button("保存跟进")
+        submitted = st.form_submit_button("保存跟进", type="primary")
     if submitted:
         execute(
             """
@@ -836,12 +1013,13 @@ def crm_page() -> None:
         st.success("跟进记录已保存。")
 
     st.dataframe(query_df("SELECT * FROM interactions ORDER BY id DESC"), width="stretch", hide_index=True)
-    st.download_button("导出跟进记录 Excel", export_table("interactions"), "interactions.xlsx")
+    st.download_button("📥 导出跟进记录 Excel", export_table("interactions"), "interactions.xlsx")
 
 
 def settings_page() -> None:
-    st.subheader("系统设置")
-    tab1, tab2 = st.tabs(["风险关键词", "黑名单"])
+    icon, color = PAGE_META["系统设置"]
+    page_header(icon, "系统设置", color)
+    tab1, tab2 = st.tabs(["⚠️ 风险关键词", "🚫 黑名单"])
     with tab1:
         with st.form("risk_keyword_form", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
@@ -850,7 +1028,7 @@ def settings_page() -> None:
             risk_level = c3.selectbox("等级", ["critical", "high", "medium", "low"])
             category = c1.text_input("分类")
             description = c2.text_input("说明")
-            if st.form_submit_button("新增风险关键词") and keyword:
+            if st.form_submit_button("新增风险关键词"):
                 execute(
                     "INSERT INTO risk_keywords(keyword, language, category, risk_level, description) VALUES (?, ?, ?, ?, ?)",
                     (keyword, language, category, risk_level, description),
@@ -865,7 +1043,7 @@ def settings_page() -> None:
             item_type = c3.selectbox("类型", ["company", "person", "domain", "email", "phone"])
             reason = st.text_area("原因")
             source = st.text_input("来源")
-            if st.form_submit_button("加入黑名单") and name:
+            if st.form_submit_button("加入黑名单"):
                 execute(
                     "INSERT INTO blacklist(name, country, type, reason, source) VALUES (?, ?, ?, ?, ?)",
                     (name, country, item_type, reason, source),
@@ -875,51 +1053,13 @@ def settings_page() -> None:
 
 
 def import_export_block(table: str) -> None:
-    with st.expander("导入 / 导出"):
+    with st.expander("📥 导入 / 导出"):
         uploaded = st.file_uploader(f"导入 {table} CSV/Excel", type=["csv", "xlsx"], key=f"upload_{table}")
         if uploaded and st.button(f"确认导入 {table}", key=f"import_{table}"):
             df = read_tabular(uploaded)
             count = import_products(df) if table == "products" else import_companies(df)
             st.success(f"已导入 {count} 条记录。")
-        st.download_button(f"导出 {table} Excel", export_table(table), f"{table}.xlsx", key=f"export_{table}")
-
-
-def build_evidence(company: dict, product: dict, hits) -> str:
-    parts = [
-        f"公司：{company.get('company_name', '')} / {company.get('country', '')}",
-        f"网站：{company.get('website', '')}",
-        f"关联产品：{product.get('product_name_cn', '') or '未关联'}",
-        "风险关键词：" + ("; ".join(hit.keyword for hit in hits) if hits else "未命中"),
-    ]
-    return "\n".join(parts)
-
-
-def build_report(company: dict, product: dict, score: dict, hits) -> str:
-    return f"""# 背调报告草稿
-
-## 公司概况
-{company.get("company_name", "")} 位于 {company.get("country", "")} {company.get("city", "")}。
-公开摘要：{company.get("business_summary", "")}
-
-## 产品匹配
-关联产品：{product.get("product_name_cn", "") or "未关联产品"}。
-匹配关键词：{company.get("match_keywords", "")}
-
-## 评分
-- 业务匹配度：{score["business_match_score"]}/30
-- 采购可能性：{score["purchase_probability_score"]}/20
-- 公司真实性：{score["authenticity_score"]}/20
-- 联系可达性：{score["contactability_score"]}/15
-- 风险扣分：{score["risk_score"]}/30
-- 最终分：{score["final_score"]}
-- 评级：{score["final_grade"]}
-
-## 风险提示
-{format_risk_hits(hits)}
-
-## 人工复核
-请人工确认公司主体、最终用途、最终用户、付款路径、HS编码、出口申报和目标市场合规要求。
-"""
+        st.download_button(f"📤 导出 {table} Excel", export_table(table), f"{table}.xlsx", key=f"export_{table}")
 
 
 if __name__ == "__main__":
