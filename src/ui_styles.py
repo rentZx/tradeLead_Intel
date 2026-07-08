@@ -524,17 +524,15 @@ def inject_css() -> None:
 def main_header(title: str, subtitle: str = "") -> None:
     """渲染主标题区（带渐变图标方块）。"""
     st.markdown(
-        f"""
-        <div class="main-header">
-            <div class="main-header-icon">
-                {_svg("trending-up", 28, "#ffffff")}
-            </div>
-            <div class="main-header-text">
-                <h1>{title}</h1>
-                <div class="subtitle">{subtitle}</div>
-            </div>
-        </div>
-        """,
+        f"""<div class="main-header">
+    <div class="main-header-icon">
+        {_svg("trending-up", 28, "#ffffff")}
+    </div>
+    <div class="main-header-text">
+        <h1>{title}</h1>
+        <div class="subtitle">{subtitle}</div>
+    </div>
+</div>""",
         unsafe_allow_html=True,
     )
 
@@ -543,42 +541,44 @@ def page_header(icon: str, title: str, color: str = C_PRIMARY) -> None:
     """渲染页面标题（带小图标方块）。"""
     bg = color + "1a"  # 10% opacity
     st.markdown(
-        f"""
-        <div class="page-header">
-            <div class="page-header-icon" style="background:{bg};color:{color};">
-                {_svg(icon, 18, color)}
-            </div>
-            <span class="page-header-title">{title}</span>
-        </div>
-        """,
+        f"""<div class="page-header">
+    <div class="page-header-icon" style="background:{bg};color:{color};">
+        {_svg(icon, 18, color)}
+    </div>
+    <span class="page-header-title">{title}</span>
+</div>""",
         unsafe_allow_html=True,
     )
 
 
 def sidebar_group(title: str) -> None:
     """在侧边栏渲染分组标题。"""
-    st.markdown(f'<div class="sidebar-group-title">{title}</div>', unsafe_allow_html=True)
+    st.sidebar.markdown(f'<div class="sidebar-group-title">{title}</div>', unsafe_allow_html=True)
 
 
 def sidebar_footer(version: str) -> None:
     """在侧边栏底部渲染版本信息。"""
-    st.markdown(
+    st.sidebar.markdown(
         f'<div class="sidebar-footer">TradeLead Intel<br>{version}<br>本地版 · 数据不出域</div>',
         unsafe_allow_html=True,
     )
 
 
 def metric_card(label: str, value: str | int, accent_color: str = C_PRIMARY, delta: str = "") -> str:
-    """返回指标卡片的 HTML 字符串。"""
-    delta_html = f'<div class="metric-card-delta" style="color:{accent_color};">{delta}</div>' if delta else ""
-    return f"""
-    <div class="metric-card">
-        <div class="metric-card-accent" style="background:{accent_color};"></div>
-        <div class="metric-card-label">{label}</div>
-        <div class="metric-card-value">{value}</div>
-        {delta_html}
-    </div>
+    """返回指标卡片的 HTML 字符串。
+
+    注意：返回紧凑的单行 HTML，不能有前导换行或缩进，
+    否则 Streamlit markdown 解析器会将其当作代码块渲染为纯文本。
     """
+    delta_html = f'<div class="metric-card-delta" style="color:{accent_color};">{delta}</div>' if delta else ""
+    return (
+        f'<div class="metric-card">'
+        f'<div class="metric-card-accent" style="background:{accent_color};"></div>'
+        f'<div class="metric-card-label">{label}</div>'
+        f'<div class="metric-card-value">{value}</div>'
+        f'{delta_html}'
+        f'</div>'
+    )
 
 
 def callout(text: str, kind: str = "info") -> None:

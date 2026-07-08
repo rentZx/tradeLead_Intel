@@ -43,6 +43,7 @@ from src.ui_styles import (
     C_WARNING,
     C_DANGER,
     C_TEXT_MUTED,
+    C_BORDER,
     GRADE_COLORS,
     inject_css,
     main_header,
@@ -99,13 +100,14 @@ def main() -> None:
     if "current_page" not in st.session_state:
         st.session_state.current_page = "首页仪表盘"
 
-    all_pages: list[str] = []
+    all_page_names: list[str] = []
     for _, pages in NAV_GROUPS:
-        all_pages.extend(pages)
+        for p in pages:
+            all_page_names.append(p.split(" ", 1)[1] if " " in p else p)
 
     # 如果 session_state 中的页面不在列表中，重置为首页
     current = st.session_state.current_page
-    if current not in all_pages:
+    if current not in all_page_names:
         current = "首页仪表盘"
         st.session_state.current_page = current
 
@@ -170,7 +172,6 @@ def dashboard_page() -> None:
         ("A/B 客户", "SELECT COUNT(*) AS n FROM companies WHERE final_grade IN ('A','B')", C_SUCCESS),
         ("风险线索", "SELECT COUNT(*) AS n FROM companies WHERE risk_status != '未筛查'", C_DANGER),
     ]
-    cols = st.columns(5)
     cards_html = ""
     for i, (label, sql, accent) in enumerate(metrics):
         val = int(query_df(sql).iloc[0]["n"])
@@ -239,13 +240,25 @@ def dashboard_page() -> None:
 
         st.markdown("##### 📈 快速操作")
         col_a, col_b, col_c = st.columns(3)
-        col_a.button("📦 产品库", use_container_width=True, on_click=lambda: st.session_state.update(current_page="产品库"))
-        col_b.button("🔍 搜索", use_container_width=True, on_click=lambda: st.session_state.update(current_page="自动搜索"))
-        col_c.button("📋 背调", use_container_width=True, on_click=lambda: st.session_state.update(current_page="背调报告"))
+        if col_a.button("📦 产品库", use_container_width=True):
+            st.session_state.current_page = "产品库"
+            st.rerun()
+        if col_b.button("🔍 搜索", use_container_width=True):
+            st.session_state.current_page = "自动搜索"
+            st.rerun()
+        if col_c.button("📋 背调", use_container_width=True):
+            st.session_state.current_page = "背调报告"
+            st.rerun()
         col_d, col_e, col_f = st.columns(3)
-        col_d.button("🏢 线索库", use_container_width=True, on_click=lambda: st.session_state.update(current_page="公司线索库"))
-        col_e.button("✉️ 开发信", use_container_width=True, on_click=lambda: st.session_state.update(current_page="开发信生成器"))
-        col_f.button("💬 CRM", use_container_width=True, on_click=lambda: st.session_state.update(current_page="CRM跟进"))
+        if col_d.button("🏢 线索库", use_container_width=True):
+            st.session_state.current_page = "公司线索库"
+            st.rerun()
+        if col_e.button("✉️ 开发信", use_container_width=True):
+            st.session_state.current_page = "开发信生成器"
+            st.rerun()
+        if col_f.button("💬 CRM", use_container_width=True):
+            st.session_state.current_page = "CRM跟进"
+            st.rerun()
 
 
 def products_page() -> None:
@@ -863,20 +876,18 @@ def due_diligence_page() -> None:
     grade_color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
     m1, m2, m3 = st.columns(3)
     m1.markdown(
-        f"""
-        <div style="background:#ffffff;border:1px solid {C_BORDER};
-        border-radius:0.75rem;padding:1rem 1.25rem;text-align:center;
-        box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-            <div style="color:{C_TEXT_MUTED};font-size:0.75rem;font-weight:600;
-            text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.5rem;">总分</div>
-            <div style="font-size:2.5rem;font-weight:800;color:{grade_color};line-height:1;">
-            {score["final_score"]}</div>
-            <div style="margin-top:0.4rem;">
-                <span style="background:{grade_color};color:white;padding:0.2rem 0.8rem;
-                border-radius:0.4rem;font-weight:700;font-size:0.9rem;">评级 {grade}</span>
-            </div>
+        f"""<div style="background:#ffffff;border:1px solid {C_BORDER};
+    border-radius:0.75rem;padding:1rem 1.25rem;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="color:{C_TEXT_MUTED};font-size:0.75rem;font-weight:600;
+        text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.5rem;">总分</div>
+        <div style="font-size:2.5rem;font-weight:800;color:{grade_color};line-height:1;">
+        {score["final_score"]}</div>
+        <div style="margin-top:0.4rem;">
+            <span style="background:{grade_color};color:white;padding:0.2rem 0.8rem;
+            border-radius:0.4rem;font-weight:700;font-size:0.9rem;">评级 {grade}</span>
         </div>
-        """,
+    </div>""",
         unsafe_allow_html=True,
     )
     m2.metric("风险扣分", score["risk_score"])
