@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeLead Intel — Design System V3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TradeLead Intel V3.0 — Design System
+   Theme: International Trade Professional / 精准外贸
+   ============================================================ */
+
+/* ---------- Design Tokens ---------- */
+:root {
+  /* == Color: Brand Primaries == */
+  --brand-navy:       #1B2D45;
+  --brand-navy-light: #243B5A;
+  --brand-navy-dark:  #0F1B2D;
+  --brand-teal:       #0E7C7B;
+  --brand-teal-light: #E6F4F4;
+  --brand-teal-dark:  #0A5C5B;
+  --brand-gold:       #B8860B;
+  --brand-gold-light: #FDF6E8;
+  --brand-gold-dark:  #8B6508;
+
+  /* == Color: Surfaces == */
+  --surface-page:     #F5F3F0;
+  --surface-card:     #FFFFFF;
+  --surface-hover:    #FAF9F7;
+  --surface-sidebar:  #0F1B2D;
+  --surface-sidebar-hover: #1A2D42;
+
+  /* == Color: Text == */
+  --text-primary:     #1B2D45;
+  --text-secondary:   #5A6B7F;
+  --text-tertiary:    #8B9DB0;
+  --text-inverse:     #E8ECF1;
+  --text-sidebar:     #A8B8CC;
+
+  /* == Color: Borders == */
+  --border-default:   #E2DDD6;
+  --border-light:     #EDEAE5;
+  --border-sidebar:   #1E3350;
+
+  /* == Color: Semantic == */
+  --semantic-success:     #0D8C5E;
+  --semantic-success-bg:  #E8F5EF;
+  --semantic-warning:     #C8781A;
+  --semantic-warning-bg:  #FDF3E5;
+  --semantic-danger:      #C0392B;
+  --semantic-danger-bg:   #FDF0ED;
+  --semantic-info:        #2E6B9E;
+  --semantic-info-bg:     #EDF3F9;
+
+  /* == Color: Grading == */
+  --grade-a: #0D8C5E;
+  --grade-b: #2E6B9E;
+  --grade-c: #C8781A;
+  --grade-d: #C0392B;
+
+  /* == Typography == */
+  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+
+  /* Fixed rem scale (app UI, not fluid) */
+  --text-xs:   0.75rem;    /* 12px — captions, badges */
+  --text-sm:   0.8125rem;  /* 13px — secondary UI, metadata */
+  --text-base: 0.875rem;   /* 14px — body, form labels */
+  --text-md:   1rem;       /* 16px — emphasized body */
+  --text-lg:   1.125rem;   /* 18px — card titles, lead text */
+  --text-xl:   1.375rem;   /* 22px — section headings */
+  --text-2xl:  1.75rem;    /* 28px — page titles */
+  --text-3xl:  2.25rem;    /* 36px — main header */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.03em;
+  --tracking-wider: 0.06em;
+
+  /* == Spacing (4pt base) == */
+  --space-0:  0;
+  --space-1:  0.25rem;   /* 4px  */
+  --space-2:  0.5rem;    /* 8px  */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+  /* == Radii == */
+  --radius-sm:  0.375rem;  /* 6px  — badges, tags */
+  --radius-md:  0.5rem;    /* 8px  — buttons, inputs */
+  --radius-lg:  0.75rem;   /* 12px — cards */
+  --radius-xl:  1rem;      /* 16px — modals, large cards */
+  --radius-2xl: 1.25rem;   /* 20px — main containers */
+
+  /* == Shadows == */
+  --shadow-sm: 0 1px 2px rgba(27,45,69,0.04);
+  --shadow-md: 0 2px 8px rgba(27,45,69,0.06), 0 1px 3px rgba(27,45,69,0.04);
+  --shadow-lg: 0 4px 16px rgba(27,45,69,0.08), 0 1px 4px rgba(27,45,69,0.04);
+
+  /* == Transitions == */
+  --transition-fast:  120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:  200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:  350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-expressive: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* == Layout == */
+  --sidebar-width: 240px;
+  --header-height: 56px;
+}
+
+/* ---------- CSS Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--brand-teal);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- App Layout ---------- */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+  grid-template-areas: "sidebar header" "sidebar main";
+  min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.app-sidebar {
+  grid-area: sidebar;
+  background: var(--surface-sidebar);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-sidebar);
+}
+
+.sidebar-brand-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-icon svg { width: 18px; height: 18px; }
+
+.sidebar-brand-text h2 {
+  color: #FFFFFF;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+}
+.sidebar-brand-text span {
+  color: var(--text-sidebar);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.sidebar-nav { padding: var(--space-2) var(--space-3); flex: 1; }
+
+.nav-group { margin-bottom: var(--space-1); }
+.nav-group-title {
+  color: #4A5E7A;
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  padding: var(--space-3) var(--space-2) var(--space-1);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-sidebar);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--surface-sidebar-hover);
+  color: #FFFFFF;
+}
+
+.nav-item.active {
+  background: var(--brand-teal);
+  color: #FFFFFF;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 8px rgba(14,124,123,0.35);
+}
+
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,0.2);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-bold);
+  min-width: 1.25rem;
+  text-align: center;
+}
+
+.nav-item.active .nav-badge { background: rgba(255,255,255,0.3); }
+
+.sidebar-footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-sidebar);
+  color: #4A5E7A;
+  font-size: 0.625rem;
+  text-align: center;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  grid-area: header;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--header-height);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.header-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.header-breadcrumb span { color: var(--text-primary); font-weight: var(--font-weight-semibold); }
+.header-breadcrumb svg { width: 12px; height: 12px; opacity: 0.5; }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-page);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  min-width: 200px;
+  cursor: text;
+  transition: all var(--transition-fast);
+}
+
+.header-search:focus-within {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(14,124,123,0.1);
+}
+
+.header-search svg { width: 16px; height: 16px; opacity: 0.5; flex-shrink: 0; }
+
+.header-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--brand-teal);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-xs);
+}
+
+/* ---------- Main Content ---------- */
+.app-main {
+  grid-area: main;
+  padding: var(--space-6);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---------- Page Title ---------- */
+.page-header {
+  margin-bottom: var(--space-6);
+}
+
+.page-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
+}
+
+/* ---------- Metric Cards Row ---------- */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.metric-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.metric-card.primary::before  { background: var(--brand-teal); }
+.metric-card.success::before  { background: var(--semantic-success); }
+.metric-card.warning::before  { background: var(--semantic-warning); }
+.metric-card.danger::before   { background: var(--semantic-danger); }
+.metric-card.purple::before   { background: #6B46C1; }
+
+.metric-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.metric-card-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-2);
+}
+
+.metric-card-value {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card-footer {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ---------- Two Column Layout ---------- */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--space-6);
+}
+
+.content-grid-full {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+/* ---------- Panel Container ---------- */
+.panel {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.panel-header h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+.panel-header-action {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--brand-teal);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.panel-header-action:hover { color: var(--brand-teal-dark); }
+
+.panel-body { padding: var(--space-5); }
+.panel-body--flush { padding: 0; }
+
+/* ---------- Data Table ---------- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.data-table th {
+  background: var(--surface-page);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  padding: var(--space-2) var(--space-4);
+  text-align: left;
+  border-bottom: 2px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:hover { background: var(--surface-hover); }
+
+.data-table .cell-company {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.data-table .cell-country {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.data-table .cell-website {
+  color: var(--brand-teal);
+  font-size: var(--text-sm);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge-grade {
+  min-width: 1.5rem;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: var(--font-weight-extrabold);
+  border-radius: var(--radius-sm);
+}
+
+.badge-grade-a { background: var(--grade-a); }
+.badge-grade-b { background: var(--grade-b); }
+.badge-grade-c { background: var(--grade-c); }
+.badge-grade-d { background: var(--grade-d); }
+
+.badge-status {
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  background: var(--surface-card);
+}
+
+.badge-risk {
+  color: var(--semantic-danger);
+  background: var(--semantic-danger-bg);
+  border: 1px solid #F5C6CB;
+}
+
+.badge-clean {
+  color: var(--semantic-success);
+  background: var(--semantic-success-bg);
+  border: 1px solid #B7DFC8;
+}
+
+.badge-stage {
+  color: var(--brand-teal);
+  background: var(--brand-teal-light);
+  border: 1px solid #B0D5D5;
+}
+
+/* ---------- Grade Distribution ---------- */
+.grade-distribution {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.grade-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.grade-chip:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+.grade-chip-square {
+  width: 1.5rem; height: 1.5rem;
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--text-xs);
+}
+
+.grade-chip-square.a { background: var(--grade-a); }
+.grade-chip-square.b { background: var(--grade-b); }
+.grade-chip-square.c { background: var(--grade-c); }
+.grade-chip-square.d { background: var(--grade-d); }
+
+.grade-chip-count {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Callouts ---------- */
+.callout {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-3);
+  border-left: 3px solid;
+}
+
+.callout-icon { flex-shrink: 0; margin-top: 1px; }
+.callout-icon svg { width: 16px; height: 16px; }
+
+.callout-info {
+  background: var(--semantic-info-bg);
+  border-color: var(--semantic-info);
+  color: #1C4B6E;
+}
+
+.callout-warning {
+  background: var(--semantic-warning-bg);
+  border-color: var(--semantic-warning);
+  color: #7A4A10;
+}
+
+.callout-danger {
+  background: var(--semantic-danger-bg);
+  border-color: var(--semantic-danger);
+  color: #7A1C1B;
+}
+
+/* ---------- Quick Actions ---------- */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-family: var(--font-family);
+}
+
+.quick-action-btn:hover {
+  border-color: var(--brand-teal);
+  background: var(--brand-teal-light);
+  color: var(--brand-teal-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-action-btn:active { transform: scale(0.98); }
+
+.quick-action-btn svg { width: 16px; height: 16px; opacity: 0.7; }
+
+/* ---------- Score Bar ---------- */
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.score-circle {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.score-circle.grade-a { border-color: var(--grade-a); color: var(--grade-a); background: rgba(13,140,94,0.05); }
+.score-circle.grade-b { border-color: var(--grade-b); color: var(--grade-b); background: rgba(46,107,158,0.05); }
+
+.score-value { font-size: 1.25rem; line-height: 1; }
+.score-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: var(--tracking-wider); font-weight: var(--font-weight-bold); }
+
+.score-details { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.score-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.score-item-bar {
+  width: 100px;
+  height: 4px;
+  background: var(--border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.score-item-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width var(--transition-slow);
+}
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-default);
+  margin-bottom: var(--space-4);
+  gap: 0;
+}
+
+.tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.tab:hover { color: var(--text-primary); }
+.tab.active { color: var(--brand-teal); border-bottom-color: var(--brand-teal); }
+
+/* ---------- Form Elements ---------- */
+.form-group { margin-bottom: var(--space-4); }
+
+.form-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.form-hint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--surface-card);
+  transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(14,124,123,0.1);
+}
+
+.form-input::placeholder { color: var(--text-tertiary); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family);
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  letter-spacing: var(--tracking-normal);
+}
+
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+.btn-primary {
+  background: var(--brand-teal);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background: var(--brand-teal-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-tertiary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: var(--semantic-danger);
+  color: #FFFFFF;
+}
+
+.btn-danger:hover {
+  background: #A93226;
+}
+
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+/* ---------- Sheet / Secondary Page ---------- */
+.sheet-container {
+  display: none;
+}
+
+.sheet-container.visible {
+  display: block;
+}
+
+.company-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.company-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.company-meta h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.company-meta .meta-row {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ---------- Token Reference Panel ---------- */
+.colors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.color-swatch {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+}
+
+.color-swatch-preview {
+  height: 48px;
+}
+
+.color-swatch-info {
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-card);
+}
+
+.color-swatch-name {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.color-swatch-hex {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .metrics-row { grid-template-columns: repeat(3, 1fr); }
+  .content-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "main";
+  }
+  .app-sidebar { display: none; }
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .quick-actions { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .app-sidebar, .app-header { display: none; }
+  .app-shell { display: block; }
+  .app-main { max-width: 100%; padding: 0; }
+}
+
+/* ---------- Toggle between Dashboard and Design Tokens ---------- */
+.view-toggle {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--surface-page);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.view-toggle-btn {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all var(--transition-fast);
+}
+
+.view-toggle-btn.active-vt {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     App Shell
+     ============================================================ -->
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17l6-6 4 4 7-7"/><path d="M14 7h6v6"/>
+        </svg>
+      </div>
+      <div class="sidebar-brand-text">
+        <h2>TradeLead Intel</h2>
+        <span>V3.0 · 外贸获客系统</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">概览</div>
+        <a class="nav-item active" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          首页仪表盘
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">产品与线索</div>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+          产品库
+          <span class="nav-badge">12</span>
+        </a>
+        <a class="nav-item" onclick="switchView('company')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>
+          公司线索库
+          <span class="nav-badge">47</span>
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4l5 11a2 2 0 01-2 3H6a2 2 0 01-2-3l5-11V3z"/></svg>
+          演示数据
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">搜索与采集</div>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+          搜索任务
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13c0-5 4-9 7-9s7 4 7 9c0 3-2 5-4 6h-6c-2-1-4-3-4-6z"/><path d="M9 17v3M15 17v3"/><circle cx="12" cy="10" r="2"/></svg>
+          自动搜索
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 010 18"/></svg>
+          官网读取
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">风控与背调</div>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v7c0 5-4 9-8 10-4-1-8-5-8-10V5l8-3z"/></svg>
+          合规风险中心
+          <span class="nav-badge" style="background:var(--semantic-danger);color:white;">3</span>
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9V3z"/><path d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-3"/><path d="M9 14l2 2 4-4"/></svg>
+          背调报告
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">营销与跟进</div>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z"/><path d="M14 3v6h6"/></svg>
+          落地页/询盘
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          开发信生成
+        </a>
+        <a class="nav-item" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-12 7l-5 1 1-5a8 8 0 1116-3z"/></svg>
+          CRM跟进
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      TradeLead Intel · V3.0<br>本地版 · 数据不出域
+    </div>
+  </aside>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="header-breadcrumb">
+        外贸获客
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span id="breadcrumb-current">首页仪表盘</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="view-toggle" style="margin-right:var(--space-3);">
+        <button class="view-toggle-btn active-vt" onclick="switchView('dashboard')">仪表盘</button>
+        <button class="view-toggle-btn" onclick="switchView('company')">公司详情</button>
+        <button class="view-toggle-btn" onclick="switchView('tokens')">设计规范</button>
+      </div>
+      <div class="header-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+        搜索公司 / 产品 / 任务...
+      </div>
+      <div class="header-avatar">A</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+
+    <!-- ========== DASHBOARD VIEW ========== -->
+    <section id="view-dashboard" class="sheet-container visible">
+
+      <div class="page-header">
+        <h1>首页仪表盘</h1>
+        <p>系统运行概览 · 最后更新于 2026-07-10 11:20</p>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="metrics-row">
+        <div class="metric-card primary">
+          <div class="metric-card-label">产品总数</div>
+          <div class="metric-card-value">12</div>
+          <div class="metric-card-footer">6 种品类覆盖</div>
+        </div>
+        <div class="metric-card success">
+          <div class="metric-card-label">线索公司</div>
+          <div class="metric-card-value">47</div>
+          <div class="metric-card-footer">本周新增 +8</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-card-label">已背调</div>
+          <div class="metric-card-value">23</div>
+          <div class="metric-card-footer">覆盖率 48.9%</div>
+        </div>
+        <div class="metric-card success">
+          <div class="metric-card-label">A / B 优质客户</div>
+          <div class="metric-card-value">18</div>
+          <div class="metric-card-footer">占已评级 78%</div>
+        </div>
+        <div class="metric-card danger">
+          <div class="metric-card-label">风险线索</div>
+          <div class="metric-card-value">3</div>
+          <div class="metric-card-footer">需人工复核</div>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="content-grid">
+
+        <!-- Left Column: Recent Leads -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>最近公司线索</h3>
+            <a class="panel-header-action">查看全部 &rarr;</a>
+          </div>
+          <div class="panel-body--flush">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>公司名称</th>
+                  <th>国家</th>
+                  <th>网站</th>
+                  <th>评级</th>
+                  <th>风险</th>
+                  <th>阶段</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-company">TechPlast Industries Ltd.</td>
+                  <td class="cell-country">哈萨克斯坦</td>
+                  <td class="cell-website">techplast.kz</td>
+                  <td><span class="badge badge-grade badge-grade-a">A</span></td>
+                  <td><span class="badge badge-clean">未发现</span></td>
+                  <td><span class="badge badge-stage">已联系</span></td>
+                </tr>
+                <tr>
+                  <td class="cell-company">UralPolymer Group</td>
+                  <td class="cell-country">俄罗斯</td>
+                  <td class="cell-website">uralpolymer.ru</td>
+                  <td><span class="badge badge-grade badge-grade-b">B</span></td>
+                  <td><span class="badge badge-clean">未发现</span></td>
+                  <td><span class="badge badge-stage">报价中</span></td>
+                </tr>
+                <tr>
+                  <td class="cell-company">Almaty Trading House</td>
+                  <td class="cell-country">哈萨克斯坦</td>
+                  <td class="cell-website">almaty-trade.kz</td>
+                  <td><span class="badge badge-grade badge-grade-a">A</span></td>
+                  <td><span class="badge badge-clean">未发现</span></td>
+                  <td><span class="badge badge-stage">已回复</span></td>
+                </tr>
+                <tr>
+                  <td class="cell-company">Dubai Machinery WLL</td>
+                  <td class="cell-country">阿联酋</td>
+                  <td class="cell-website">dubaimach.ae</td>
+                  <td><span class="badge badge-grade badge-grade-c">C</span></td>
+                  <td><span class="badge badge-risk">风险命中</span></td>
+                  <td><span class="badge badge-status">暂缓</span></td>
+                </tr>
+                <tr>
+                  <td class="cell-company">Cairo Plastic Solutions</td>
+                  <td class="cell-country">埃及</td>
+                  <td class="cell-website">cairoplastic.com.eg</td>
+                  <td><span class="badge badge-grade badge-grade-b">B</span></td>
+                  <td><span class="badge badge-clean">未发现</span></td>
+                  <td><span class="badge badge-stage">未联系</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+
+          <!-- Grade Distribution -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>评级分布</h3>
+            </div>
+            <div class="panel-body">
+              <div class="grade-distribution">
+                <div class="grade-chip">
+                  <div class="grade-chip-square a">A</div>
+                  <span>优质</span>
+                  <span class="grade-chip-count">8</span>
+                </div>
+                <div class="grade-chip">
+                  <div class="grade-chip-square b">B</div>
+                  <span>良好</span>
+                  <span class="grade-chip-count">10</span>
+                </div>
+                <div class="grade-chip">
+                  <div class="grade-chip-square c">C</div>
+                  <span>可跟进</span>
+                  <span class="grade-chip-count">4</span>
+                </div>
+                <div class="grade-chip">
+                  <div class="grade-chip-square d">D</div>
+                  <span>不建议</span>
+                  <span class="grade-chip-count">1</span>
+                </div>
+              </div>
+              <div style="margin-top:var(--space-3);color:var(--text-tertiary);font-size:var(--text-xs);">
+                已评级 23 / 共 47 家公司
+              </div>
+            </div>
+          </div>
+
+          <!-- Compliance -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>合规提醒</h3>
+            </div>
+            <div class="panel-body" style="padding:var(--space-3) var(--space-4);">
+              <div class="callout callout-info">
+                <span class="callout-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                </span>
+                <span>涉及机床、工业设备、二手设备、高精度设备时，请人工核查 HS 编码、技术参数、最终用途和出口申报要求。</span>
+              </div>
+              <div class="callout callout-warning">
+                <span class="callout-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 16H3l9-16z"/><path d="M12 9v5M12 17h.01"/></svg>
+                </span>
+                <span>系统只辅助整理和判断。所有联系、报价、成交和合规决策须由用户人工确认。</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>快速操作</h3>
+            </div>
+            <div class="panel-body">
+              <div class="quick-actions">
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/></svg>
+                  产品库
+                </button>
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+                  搜索
+                </button>
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v3H9V3z"/><path d="M9 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-3"/><path d="M9 14l2 2 4-4"/></svg>
+                  背调
+                </button>
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                  开发信
+                </button>
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 01-12 7l-5 1 1-5a8 8 0 1116-3z"/></svg>
+                  CRM
+                </button>
+                <button class="quick-action-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v7c0 5-4 9-8 10-4-1-8-5-8-10V5l8-3z"/></svg>
+                  合规筛查
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== COMPANY DETAIL VIEW ========== -->
+    <section id="view-company" class="sheet-container">
+
+      <div class="page-header">
+        <h1>TechPlast Industries Ltd.</h1>
+        <p>公司详情 · 背调报告 · 联系记录</p>
+      </div>
+
+      <div class="company-detail-header">
+        <div class="company-meta">
+          <div class="meta-row" style="gap:var(--space-2);align-items:center;">
+            <span class="badge badge-grade badge-grade-a">A</span>
+            <span class="badge badge-clean">风险：未发现</span>
+            <span class="badge badge-stage">阶段：已联系</span>
+          </div>
+          <div class="meta-row">
+            <span>哈萨克斯坦 · 阿拉木图</span>
+            <span>·</span>
+            <span>techplast.kz</span>
+            <span>·</span>
+            <span>info@techplast.kz</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-2);">
+          <button class="btn btn-secondary btn-sm">编辑</button>
+          <button class="btn btn-primary btn-sm">生成开发信</button>
+        </div>
+      </div>
+
+      <div class="content-grid">
+
+        <!-- Left: Score + Evidence -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div class="panel">
+            <div class="panel-header"><h3>综合评分</h3></div>
+            <div class="panel-body">
+              <div class="score-display">
+                <div class="score-circle grade-a">
+                  <span class="score-value">86</span>
+                  <span class="score-label">A 级</span>
+                </div>
+                <div class="score-details">
+                  <div class="score-item">
+                    业务匹配度
+                    <div class="score-item-bar"><div class="score-item-fill" style="width:90%;background:var(--semantic-success);"></div></div>
+                    27/30
+                  </div>
+                  <div class="score-item">
+                    采购可能性
+                    <div class="score-item-bar"><div class="score-item-fill" style="width:85%;background:var(--brand-teal);"></div></div>
+                    17/20
+                  </div>
+                  <div class="score-item">
+                    真实性
+                    <div class="score-item-bar"><div class="score-item-fill" style="width:80%;background:var(--semantic-info);"></div></div>
+                    16/20
+                  </div>
+                  <div class="score-item">
+                    联系可达性
+                    <div class="score-item-bar"><div class="score-item-fill" style="width:93%;background:#6B46C1;"></div></div>
+                    14/15
+                  </div>
+                  <div class="score-item" style="color:var(--semantic-danger);font-weight:var(--font-weight-semibold);">
+                    风险扣分
+                    <span style="color:var(--semantic-danger);">-2</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h3>背调证据摘要</h3></div>
+            <div class="panel-body">
+              <p style="font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--text-secondary);">
+                TechPlast Industries 是哈萨克斯坦阿拉木图地区的塑料制品进口批发商，成立于 2014 年，
+                主要从中国、伊朗和土耳其进口塑料小件制品和原材料。官网内容完整，包含公司介绍、产品目录和联系方式。
+                通过 LinkedIn 交叉验证确认公司真实存在，联系人和邮箱有效性已验证。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: CRM History -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div class="panel">
+            <div class="panel-header"><h3>最近跟进记录</h3></div>
+            <div class="panel-body--flush">
+              <table class="data-table">
+                <thead>
+                  <tr><th>日期</th><th>渠道</th><th>内容摘要</th><th>阶段</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="color:var(--text-tertiary);">07-08</td>
+                    <td><span class="badge badge-stage">Email</span></td>
+                    <td style="font-size:var(--text-sm);">发送产品目录和报价单，客户回复询问样品事宜</td>
+                    <td><span class="badge badge-stage">已回复</span></td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--text-tertiary);">07-01</td>
+                    <td><span class="badge badge-stage">WhatsApp</span></td>
+                    <td style="font-size:var(--text-sm);">首次联系，介绍公司和塑料小件制品产品线</td>
+                    <td><span class="badge badge-stage">已联系</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h3>新增跟进</h3></div>
+            <div class="panel-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">联系日期</label>
+                  <input class="form-input" type="date" value="2026-07-10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">渠道</label>
+                  <select class="form-input">
+                    <option>Email</option><option>WhatsApp</option><option>电话</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">阶段</label>
+                  <select class="form-input">
+                    <option>已联系</option><option>已回复</option><option>有意向</option><option>报价中</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">联系内容</label>
+                <textarea class="form-input" rows="3" placeholder="记录本次沟通内容..."></textarea>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:var(--space-2);margin-top:var(--space-2);">
+                <button class="btn btn-secondary btn-sm">取消</button>
+                <button class="btn btn-primary btn-sm">保存跟进</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== DESIGN TOKENS VIEW ========== -->
+    <section id="view-tokens" class="sheet-container">
+
+      <div class="page-header">
+        <h1>Design System V3.0</h1>
+        <p>TradeLead Intel · International Trade Professional · 设计规范文档</p>
+      </div>
+
+      <div class="content-grid">
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div class="panel">
+            <div class="panel-header"><h3>设计理念</h3></div>
+            <div class="panel-body">
+              <p style="font-size:var(--text-sm);line-height:var(--leading-relaxed);color:var(--text-secondary);margin-bottom:var(--space-3);">
+                <strong>Precision Trade 精准外贸</strong> — 以国际贸易专业人士的工作流为中心，
+                在权威可信与亲和易用之间取得平衡。深海蓝底色传递信任与专业，
+                青蓝色点缀为界面注入现代感和国际视野，金色用于标示高价值线索。
+              </p>
+              <div style="display:flex;gap:var(--space-4);font-size:var(--text-xs);color:var(--text-tertiary);">
+                <div><strong style="color:var(--text-primary);">目标用户</strong><br>外贸业务主管 / 业务员</div>
+                <div><strong style="color:var(--text-primary);">设计风格</strong><br>专业商务 / International Trade</div>
+                <div><strong style="color:var(--text-primary);">平台</strong><br>Web 桌面端 (1024px+)</div>
+                <div><strong style="color:var(--text-primary);">可访问性</strong><br>WCAG AA</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h3>品牌色彩系统</h3></div>
+            <div class="panel-body">
+              <h4 style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:var(--text-tertiary);margin-bottom:var(--space-3);">主色调</h4>
+              <div class="colors-grid">
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--brand-navy);"></div><div class="color-swatch-info"><div class="color-swatch-name">Navy Base</div><div class="color-swatch-hex">#1B2D45</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--brand-navy-light);"></div><div class="color-swatch-info"><div class="color-swatch-name">Navy Light</div><div class="color-swatch-hex">#243B5A</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--brand-teal);"></div><div class="color-swatch-info"><div class="color-swatch-name">Teal Primary</div><div class="color-swatch-hex">#0E7C7B</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--brand-teal-dark);"></div><div class="color-swatch-info"><div class="color-swatch-name">Teal Dark</div><div class="color-swatch-hex">#0A5C5B</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--brand-gold);"></div><div class="color-swatch-info"><div class="color-swatch-name">Gold Accent</div><div class="color-swatch-hex">#B8860B</div></div></div>
+              </div>
+
+              <h4 style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:var(--text-tertiary);margin:var(--space-4) 0 var(--space-3);">语义色</h4>
+              <div class="colors-grid">
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--semantic-success);"></div><div class="color-swatch-info"><div class="color-swatch-name">Success</div><div class="color-swatch-hex">#0D8C5E</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--semantic-warning);"></div><div class="color-swatch-info"><div class="color-swatch-name">Warning</div><div class="color-swatch-hex">#C8781A</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--semantic-danger);"></div><div class="color-swatch-info"><div class="color-swatch-name">Danger</div><div class="color-swatch-hex">#C0392B</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--semantic-info);"></div><div class="color-swatch-info"><div class="color-swatch-name">Info</div><div class="color-swatch-hex">#2E6B9E</div></div></div>
+              </div>
+
+              <h4 style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:var(--tracking-wider);color:var(--text-tertiary);margin:var(--space-4) 0 var(--space-3);">评级色</h4>
+              <div class="colors-grid">
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--grade-a);"></div><div class="color-swatch-info"><div class="color-swatch-name">A 优质</div><div class="color-swatch-hex">#0D8C5E</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--grade-b);"></div><div class="color-swatch-info"><div class="color-swatch-name">B 良好</div><div class="color-swatch-hex">#2E6B9E</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--grade-c);"></div><div class="color-swatch-info"><div class="color-swatch-name">C 可跟进</div><div class="color-swatch-hex">#C8781A</div></div></div>
+                <div class="color-swatch"><div class="color-swatch-preview" style="background:var(--grade-d);"></div><div class="color-swatch-info"><div class="color-swatch-name">D 不建议</div><div class="color-swatch-hex">#C0392B</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+          <div class="panel">
+            <div class="panel-header"><h3>字体系统</h3></div>
+            <div class="panel-body">
+              <table class="data-table" style="margin-bottom:var(--space-3);">
+                <thead><tr><th>用途</th><th>字体</th><th>字重</th><th>字号</th></tr></thead>
+                <tbody>
+                  <tr><td>界面字体</td><td>Plus Jakarta Sans</td><td>400-800</td><td>--</td></tr>
+                  <tr><td>等宽/数据</td><td>JetBrains Mono</td><td>400-600</td><td>--</td></tr>
+                  <tr style="background:var(--surface-hover);"><td colspan="4" style="font-weight:var(--font-weight-bold);color:var(--text-tertiary);font-size:var(--text-xs);">字号层级</td></tr>
+                  <tr><td>主标题</td><td style="font-size:var(--text-3xl);font-weight:var(--font-weight-extrabold);">36px</td><td>800</td><td>--text-3xl</td></tr>
+                  <tr><td>页面标题</td><td style="font-size:var(--text-2xl);font-weight:var(--font-weight-extrabold);">28px</td><td>800</td><td>--text-2xl</td></tr>
+                  <tr><td>区块标题</td><td style="font-size:var(--text-lg);">18px</td><td>700</td><td>--text-lg</td></tr>
+                  <tr><td>正文</td><td style="font-size:var(--text-base);">14px</td><td>400</td><td>--text-base</td></tr>
+                  <tr><td>辅助文字</td><td style="font-size:var(--text-xs);">12px</td><td>600</td><td>--text-xs</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h3>组件状态矩阵</h3></div>
+            <div class="panel-body">
+              <table class="data-table">
+                <thead><tr><th>状态</th><th>触发条件</th><th>视觉表现</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Default</td><td>静止状态</td><td>基础样式</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Hover</td><td>鼠标悬停</td><td>轻微上浮 + 阴影增强</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Active</td><td>按下</td><td>scale(0.98) 缩小</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Focus</td><td>键盘聚焦</td><td>2px Teal outline-offset</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Disabled</td><td>不可交互</td><td>50% opacity + no-pointer</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Loading</td><td>处理中</td><td>Skeleton 骨架屏</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Error</td><td>验证失败</td><td>红色边框 + 错误提示</td></tr>
+                  <tr><td style="font-weight:var(--font-weight-semibold);">Success</td><td>操作成功</td><td>绿色确认标记</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h3>间距系统 4px Base</h3></div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">4px</span><div style="width:4px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-1</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">8px</span><div style="width:8px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-2</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">12px</span><div style="width:12px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-3</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">16px</span><div style="width:16px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-4</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">24px</span><div style="width:24px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-6</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">32px</span><div style="width:32px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-8</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-xs);">
+                  <span style="width:60px;color:var(--text-tertiary);">48px</span><div style="width:48px;height:8px;background:var(--brand-teal);border-radius:1px;"></div><span style="color:var(--text-tertiary);margin-left:auto;">--space-12</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// View switching
+function switchView(viewName) {
+  document.querySelectorAll('.sheet-container').forEach(el => el.classList.remove('visible'));
+  const target = document.getElementById('view-' + viewName);
+  if (target) target.classList.add('visible');
+
+  // Update toggle buttons
+  document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.classList.remove('active-vt'));
+  const matchingBtns = document.querySelectorAll('.view-toggle-btn');
+  matchingBtns.forEach(btn => {
+    if (btn.textContent.trim().includes(viewName === 'dashboard' ? '仪表盘' : viewName === 'company' ? '公司详情' : '设计规范')) {
+      btn.classList.add('active-vt');
+    }
+  });
+
+  // Update breadcrumb
+  const breadcrumb = document.getElementById('breadcrumb-current');
+  if (viewName === 'dashboard') breadcrumb.textContent = '首页仪表盘';
+  else if (viewName === 'company') breadcrumb.textContent = '公司详情';
+  else if (viewName === 'tokens') breadcrumb.textContent = '设计规范';
+
+  // Update nav active states
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  if (viewName === 'dashboard') {
+    document.querySelector('.nav-item').classList.add('active');
+  }
+}
+
+// Initialize: show dashboard
+switchView('dashboard');
+</script>
+
+</body>
+</html>

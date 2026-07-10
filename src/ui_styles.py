@@ -1,6 +1,7 @@
-"""TradeLead Intel - 自定义 UI 样式模块
+"""TradeLead Intel - 自定义 UI 样式模块 V3.0
 
-提供全局 CSS 注入和 UI 辅助函数，让 Streamlit 应用告别默认丑皮肤。
+提供全局 CSS 注入和 UI 辅助函数。
+Design System: Precision Trade / 精准外贸 — 专业商务风。
 """
 
 from __future__ import annotations
@@ -8,30 +9,46 @@ from __future__ import annotations
 import streamlit as st
 
 # ---------------------------------------------------------------------------
-# 配色常量
+# 配色常量 (Precision Trade V3.0)
 # ---------------------------------------------------------------------------
-C_PRIMARY = "#2563eb"
-C_PRIMARY_DARK = "#1d4ed8"
-C_PRIMARY_LIGHT = "#dbeafe"
-C_BG = "#f8fafc"
-C_CARD = "#ffffff"
-C_BORDER = "#e2e8f0"
-C_TEXT = "#1e293b"
-C_TEXT_MUTED = "#64748b"
-C_SUCCESS = "#16a34a"
-C_SUCCESS_BG = "#dcfce7"
-C_WARNING = "#d97706"
-C_WARNING_BG = "#fef3c7"
-C_DANGER = "#dc2626"
-C_DANGER_BG = "#fee2e2"
-C_INFO_BG = "#eff6ff"
+# 品牌主色
+C_PRIMARY = "#0E7C7B"           # Teal 青蓝 — 现代、国际、精准
+C_PRIMARY_DARK = "#0A5C5B"       # Teal 深色 — hover/active
+C_PRIMARY_LIGHT = "#E6F4F4"      # Teal 浅底 — 背景衬色
+
+# 品牌辅色
+C_NAVY = "#1B2D45"              # 深海蓝 — 权威、信任、侧边栏底色
+C_NAVY_LIGHT = "#243B5A"        # 浅海蓝 — hover 态
+C_GOLD = "#B8860B"              # 金色 — 高价值/A 级专属点缀
+
+# 表面色
+C_BG = "#F5F3F0"                # 暖灰底色 — 减少数据密集场景的视觉疲劳
+C_CARD = "#FFFFFF"              # 卡片底
+C_BORDER = "#E2DDD6"            # 暖灰边框
+C_BORDER_LIGHT = "#EDEAE5"      # 浅暖灰分割线
+
+# 文字色
+C_TEXT = "#1B2D45"              # 主文字 — 深海蓝
+C_TEXT_MUTED = "#5A6B7F"        # 辅助文字 — 石板灰
+C_TEXT_TERTIARY = "#8B9DB0"     # 三级文字
+
+# 语义色
+C_SUCCESS = "#0D8C5E"           # 成功 — 深绿
+C_SUCCESS_BG = "#E8F5EF"
+C_WARNING = "#C8781A"           # 警告 — 琥珀橙
+C_WARNING_BG = "#FDF3E5"
+C_DANGER = "#C0392B"            # 危险 — 低调红
+C_DANGER_BG = "#FDF0ED"
+C_INFO = "#2E6B9E"              # 信息 — 石板蓝
+C_INFO_BG = "#EDF3F9"
+C_PURPLE = "#6B46C1"            # 紫色 — 特殊指标
 
 # 评级颜色
 GRADE_COLORS = {
-    "A": "#16a34a",
-    "B": "#2563eb",
-    "C": "#d97706",
-    "D": "#dc2626",
+    "A": "#0D8C5E",
+    "B": "#2E6B9E",
+    "C": "#C8781A",
+    "D": "#C0392B",
 }
 
 # 页面图标
@@ -56,76 +73,79 @@ PAGE_ICONS = {
 # ---------------------------------------------------------------------------
 GLOBAL_CSS = f"""
 <style>
+/* ============================================================
+   TradeLead Intel V3.0 — Precision Trade Design System
+   ============================================================ */
+
 /* ==================== 全局重置 ==================== */
 .stApp {{
     background: {C_BG};
 }}
 
-/* 隐藏默认 footer 和 hamburger 装饰 */
 #MainMenu {{visibility: hidden;}}
 footer {{visibility: hidden;}}
+header[data-testid="stHeader"] {{background: transparent;}}
 
-/* ==================== 侧边栏 ==================== */
+/* ==================== 侧边栏 — 深海蓝基调 ==================== */
 section[data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    border-right: 1px solid #334155;
+    background: linear-gradient(180deg, #0F1B2D 0%, {C_NAVY} 100%);
+    border-right: 1px solid #1E3350;
 }}
 
 section[data-testid="stSidebar"] .stMarkdown h1,
 section[data-testid="stSidebar"] .stMarkdown h2,
 section[data-testid="stSidebar"] .stMarkdown h3,
 section[data-testid="stSidebar"] .stMarkdown span {{
-    color: #e2e8f0 !important;
+    color: #E8ECF1 !important;
 }}
 
 section[data-testid="stSidebar"] .stRadio > label {{
-    color: #94a3b8;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
+    color: #7A8EA8;
+    font-size: 0.875rem;
+    letter-spacing: 0.03em;
+    font-weight: 700;
 }}
 
 /* 侧边栏导航项 */
 section[data-testid="stSidebar"] [role="radiogroup"] label {{
-    color: #cbd5e1 !important;
+    color: #A8B8CC !important;
     padding: 0.35rem 0.5rem;
     border-radius: 0.5rem;
-    transition: all 0.2s;
-    font-size: 0.875rem;
+    transition: all 0.15s;
+    font-size: 0.8125rem;
 }}
 
 section[data-testid="stSidebar"] [role="radiogroup"] label:hover {{
-    background: rgba(255,255,255,0.08);
-    color: #ffffff !important;
+    background: rgba(255,255,255,0.06);
+    color: #FFFFFF !important;
 }}
 
 section[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] {{
     background: {C_PRIMARY};
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     font-weight: 600;
+    box-shadow: 0 2px 8px rgba(14,124,123,0.35);
 }}
 
 /* 侧边栏分组标题 */
 .sidebar-group-title {{
-    color: #64748b;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: #7A8EA8;
+    font-size: 0.875rem;
+    letter-spacing: 0.03em;
     font-weight: 700;
-    padding: 0.75rem 0 0.25rem 0;
-    border-top: 1px solid rgba(148,163,184,0.15);
+    padding: 0.85rem 0 0.35rem 0;
+    border-top: 1px solid rgba(74,94,122,0.18);
     margin-top: 0.5rem;
 }}
 
 /* 侧边栏导航按钮（button-based nav） */
 section[data-testid="stSidebar"] .stButton > button {{
     background: transparent;
-    color: #cbd5e1 !important;
+    color: #A8B8CC !important;
     border: 1px solid transparent;
     border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     text-align: left;
     transition: all 0.15s;
@@ -133,31 +153,31 @@ section[data-testid="stSidebar"] .stButton > button {{
 }}
 
 section[data-testid="stSidebar"] .stButton > button:hover {{
-    background: rgba(255,255,255,0.08);
-    color: #ffffff !important;
-    border-color: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    color: #FFFFFF !important;
+    border-color: rgba(255,255,255,0.06);
     transform: none;
     box-shadow: none;
 }}
 
-/* 活跃导航项（primary 类型按钮） */
 section[data-testid="stSidebar"] .stButton > button[kind="primary"],
 section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     background: {C_PRIMARY} !important;
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     border: none;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+    box-shadow: 0 2px 8px rgba(14,124,123,0.35);
 }}
 
 /* 侧边栏底部版本信息 */
 .sidebar-footer {{
-    color: #475569;
-    font-size: 0.7rem;
+    color: #4A5E7A;
+    font-size: 0.625rem;
     text-align: center;
     padding: 1rem 0 0.5rem 0;
-    border-top: 1px solid rgba(148,163,184,0.15);
+    border-top: 1px solid rgba(74,94,122,0.18);
     margin-top: 1rem;
+    letter-spacing: 0.03em;
 }}
 
 /* ==================== 标题区 ==================== */
@@ -179,7 +199,7 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     font-size: 1.5rem;
     color: white;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    box-shadow: 0 4px 12px rgba(14,124,123,0.3);
 }}
 
 .main-header-text h1 {{
@@ -188,6 +208,7 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     font-weight: 800;
     color: {C_TEXT};
     line-height: 1.2;
+    letter-spacing: -0.02em;
 }}
 
 .main-header-text .subtitle {{
@@ -202,7 +223,7 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     border-bottom: 2px solid {C_BORDER};
 }}
 
@@ -218,27 +239,28 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
 }}
 
 .page-header-title {{
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     font-weight: 700;
     color: {C_TEXT};
     margin: 0;
+    letter-spacing: -0.02em;
 }}
 
-/* ==================== 指标卡片 ==================== */
+/* ==================== 指标卡片 V3 — 左侧色条引导 ==================== */
 .metric-card {{
     background: {C_CARD};
     border: 1px solid {C_BORDER};
     border-radius: 0.75rem;
     padding: 1rem 1.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
     transition: all 0.2s;
     position: relative;
     overflow: hidden;
 }}
 
 .metric-card:hover {{
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(27,45,69,0.06), 0 1px 3px rgba(27,45,69,0.04);
+    transform: translateY(-1px);
 }}
 
 .metric-card-accent {{
@@ -246,12 +268,12 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    border-radius: 0.75rem 0 0 0.75rem;
+    width: 3px;
+    border-radius: 0 0.375rem 0.375rem 0;
 }}
 
 .metric-card-label {{
-    color: {C_TEXT_MUTED};
+    color: {C_TEXT_TERTIARY};
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -260,10 +282,11 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
 }}
 
 .metric-card-value {{
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: {C_TEXT};
     line-height: 1;
+    font-variant-numeric: tabular-nums;
 }}
 
 .metric-card-delta {{
@@ -276,86 +299,136 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.5rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.375rem;
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
     color: white;
+    padding: 0 0.15rem;
 }}
 
-.grade-A {{ background: {C_SUCCESS}; }}
-.grade-B {{ background: {C_PRIMARY}; }}
-.grade-C {{ background: {C_WARNING}; }}
-.grade-D {{ background: {C_DANGER}; }}
+.grade-A {{ background: {GRADE_COLORS["A"]}; }}
+.grade-B {{ background: {GRADE_COLORS["B"]}; }}
+.grade-C {{ background: {GRADE_COLORS["C"]}; }}
+.grade-D {{ background: {GRADE_COLORS["D"]}; }}
+
+/* ==================== 评级分布芯片 ==================== */
+.grade-chip {{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid {C_BORDER};
+    background: {C_CARD};
+    transition: all 0.15s;
+    cursor: pointer;
+}}
+
+.grade-chip:hover {{
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
+    transform: translateY(-1px);
+}}
+
+.grade-chip-square {{
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.35rem;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+}}
 
 /* ==================== 信息卡片 / callout ==================== */
 .callout {{
-    border-radius: 0.625rem;
-    padding: 0.875rem 1rem;
-    border-left: 4px solid;
-    font-size: 0.85rem;
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.875rem;
+    border-left: 3px solid;
+    font-size: 0.8125rem;
     line-height: 1.5;
     margin-bottom: 0.5rem;
 }}
 
 .callout-info {{
     background: {C_INFO_BG};
-    border-color: {C_PRIMARY};
-    color: #1e3a5f;
+    border-color: {C_INFO};
+    color: #1C4B6E;
 }}
 
 .callout-warning {{
     background: {C_WARNING_BG};
     border-color: {C_WARNING};
-    color: #78350f;
+    color: #7A4A10;
 }}
 
 .callout-danger {{
     background: {C_DANGER_BG};
     border-color: {C_DANGER};
-    color: #7f1d1d;
+    color: #7A1C1B;
 }}
 
 .callout-success {{
     background: {C_SUCCESS_BG};
     border-color: {C_SUCCESS};
-    color: #14532d;
+    color: #0A5C3A;
 }}
 
 /* ==================== 按钮 ==================== */
 .stButton > button {{
     border-radius: 0.5rem;
     font-weight: 600;
-    transition: all 0.15s;
+    transition: all 0.12s;
     border: 1px solid {C_BORDER};
 }}
 
 .stButton > button:hover {{
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(27,45,69,0.08);
+}}
+
+.stButton > button[kind="primary"] {{
+    background: {C_PRIMARY} !important;
+    border-color: {C_PRIMARY} !important;
+}}
+
+.stButton > button[kind="primary"]:hover {{
+    background: {C_PRIMARY_DARK} !important;
+    border-color: {C_PRIMARY_DARK} !important;
+}}
+
+.stButton > button:active {{
+    transform: scale(0.98);
 }}
 
 /* ==================== 表格 ==================== */
 .stDataFrame {{
-    border-radius: 0.625rem;
+    border-radius: 0.75rem;
     overflow: hidden;
     border: 1px solid {C_BORDER};
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
 }}
 
 .stDataFrame [data-testid="stDataFrameResizable"] {{
-    border-radius: 0.625rem;
+    border-radius: 0.75rem;
 }}
 
-/* 表头 */
 .stDataFrame th {{
-    background: #f8fafc !important;
+    background: {C_BG} !important;
     font-weight: 700 !important;
     font-size: 0.75rem !important;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    color: {C_TEXT_MUTED} !important;
+    color: {C_TEXT_TERTIARY} !important;
+}}
+
+.stDataFrame tbody tr:hover {{
+    background: #FAF9F7;
 }}
 
 /* ==================== 表单 & 输入 ==================== */
@@ -369,13 +442,13 @@ section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
 .stTextInput > div > input:focus,
 .stTextArea > div > textarea:focus {{
     border-color: {C_PRIMARY} !important;
-    box-shadow: 0 0 0 3px {C_PRIMARY_LIGHT} !important;
+    box-shadow: 0 0 0 3px rgba(14,124,123,0.1) !important;
 }}
 
 /* ==================== Expander ==================== */
 .streamlit-expanderHeader {{
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     background: {C_CARD};
     border-radius: 0.625rem !important;
 }}
@@ -398,9 +471,9 @@ details[data-testid="stExpander"] {{
     padding: 0.5rem 1rem;
     font-weight: 600;
     font-size: 0.85rem;
-    color: {C_TEXT_MUTED};
-    border-bottom: 3px solid transparent;
-    transition: all 0.15s;
+    color: {C_TEXT_TERTIARY};
+    border-bottom: 2px solid transparent;
+    transition: all 0.12s;
 }}
 
 .stTabs [data-baseweb="tab"]:hover {{
@@ -435,6 +508,68 @@ hr {{
     transition: width 0.3s ease;
 }}
 
+/* ==================== 快速操作按钮 ==================== */
+.quick-action-btn {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid {C_BORDER};
+    border-radius: 0.5rem;
+    background: {C_CARD};
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: {C_TEXT};
+    cursor: pointer;
+    transition: all 0.15s;
+}}
+
+.quick-action-btn:hover {{
+    border-color: {C_PRIMARY};
+    background: {C_PRIMARY_LIGHT};
+    color: {C_PRIMARY_DARK};
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
+}}
+
+.quick-action-btn:active {{
+    transform: scale(0.98);
+}}
+
+/* ==================== 状态徽章 ==================== */
+.badge-risk {{
+    display: inline-flex;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: {C_DANGER};
+    background: {C_DANGER_BG};
+    border: 1px solid #F5C6CB;
+}}
+
+.badge-clean {{
+    display: inline-flex;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: {C_SUCCESS};
+    background: {C_SUCCESS_BG};
+    border: 1px solid #B7DFC8;
+}}
+
+.badge-stage {{
+    display: inline-flex;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: {C_PRIMARY};
+    background: {C_PRIMARY_LIGHT};
+    border: 1px solid #B0D5D5;
+}}
+
 /* ==================== 响应式 ==================== */
 @media (max-width: 768px) {{
     .main-header-text h1 {{
@@ -446,17 +581,16 @@ hr {{
 }}
 
 /* ==================== Streamlit 原生组件覆盖 ==================== */
-/* Metric 元素 */
 [data-testid="stMetric"] {{
     background: {C_CARD};
     border: 1px solid {C_BORDER};
     border-radius: 0.625rem;
     padding: 0.875rem 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
 }}
 
 [data-testid="stMetric"] label {{
-    color: {C_TEXT_MUTED} !important;
+    color: {C_TEXT_TERTIARY} !important;
     font-size: 0.75rem !important;
     font-weight: 600 !important;
     text-transform: uppercase;
@@ -469,16 +603,24 @@ hr {{
     color: {C_TEXT} !important;
 }}
 
-/* caption */
 .stCaption {{
     color: {C_TEXT_MUTED} !important;
     font-size: 0.8rem !important;
 }}
 
-/* subheader */
 h3 {{
     color: {C_TEXT} !important;
     font-weight: 700 !important;
+}}
+
+/* 评分展示卡片 */
+.score-display-card {{
+    background: {C_CARD};
+    border: 1px solid {C_BORDER};
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(27,45,69,0.04);
 }}
 </style>
 """
@@ -587,6 +729,92 @@ def callout(text: str, kind: str = "info") -> None:
 
 
 def grade_badge(grade: str) -> str:
-    """返回评级徽章 HTML。"""
+    """返回评级徽章 HTML（V3 圆角方块）。"""
     color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
-    return f'<span class="grade-badge grade-{grade}" style="background:{color};">{grade}</span>'
+    return (
+        f'<span class="grade-badge grade-{grade}" style="background:{color};">{grade}</span>'
+    )
+
+
+def grade_chip(grade: str, count: int) -> str:
+    """返回评级分布芯片 HTML（带色块 + 数量）。"""
+    color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
+    labels = {"A": "优质", "B": "良好", "C": "可跟进", "D": "不建议"}
+    label = labels.get(grade, grade)
+    return (
+        f'<div class="grade-chip">'
+        f'<div class="grade-chip-square" style="background:{color};">{grade}</div>'
+        f'<span style="color:{C_TEXT};min-width:2rem;">{label}</span>'
+        f'<span style="font-weight:800;color:{C_TEXT};font-variant-numeric:tabular-nums;min-width:1rem;text-align:right;">{count}</span>'
+        f'</div>'
+    )
+
+
+def status_badge(label: str, kind: str = "stage") -> str:
+    """返回状态徽章 HTML。
+    kind: 'risk' / 'clean' / 'stage'
+    """
+    return f'<span class="badge-{kind}">{label}</span>'
+
+
+def score_card(
+    final_score: int,
+    grade: str,
+    business_match: int = 0,
+    purchase_probability: int = 0,
+    authenticity: int = 0,
+    contactability: int = 0,
+    risk_score: int = 0,
+) -> str:
+    """返回 V3 评分展示卡片 HTML（含环形分数 + 分项进度条）。"""
+    grade_color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
+
+    bars = [
+        ("业务匹配度 /30", business_match, 30, C_SUCCESS),
+        ("采购可能性 /20", purchase_probability, 20, C_PRIMARY),
+        ("真实性 /20", authenticity, 20, C_INFO),
+        ("联系可达性 /15", contactability, 15, C_PURPLE),
+    ]
+    bar_html = ""
+    for label, val, total, bar_color in bars:
+        pct = (val / total * 100) if total > 0 else 0
+        bar_html += (
+            f'<div style="display:flex;align-items:center;justify-content:space-between;'
+            f'gap:0.5rem;font-size:0.75rem;color:{C_TEXT_MUTED};margin-bottom:0.2rem;">'
+            f'<span style="min-width:5rem;">{label}</span>'
+            f'<div class="score-bar" style="flex:1;min-width:60px;"><div class="score-bar-fill" '
+            f'style="width:{pct}%;background:{bar_color};"></div></div>'
+            f'<span style="min-width:2rem;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;">{val}</span>'
+            f'</div>'
+        )
+
+    risk_html = ""
+    if risk_score > 0:
+        risk_html += (
+            f'<div style="display:flex;align-items:center;justify-content:space-between;'
+            f'gap:0.5rem;font-size:0.75rem;color:{C_DANGER};margin-top:0.25rem;">'
+            f'<span style="min-width:5rem;font-weight:600;">⚠️ 风险扣分</span>'
+            f'<span style="flex:1;"></span>'
+            f'<span style="text-align:right;font-weight:700;">-{risk_score}</span>'
+            f'</div>'
+        )
+
+    return (
+        f'<div class="score-display-card">'
+        f'<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">'
+        f'<div style="width:3.5rem;height:3.5rem;border-radius:50%;display:flex;flex-direction:column;'
+        f'align-items:center;justify-content:center;border:3px solid {grade_color};'
+        f'background:{grade_color}0D;flex-shrink:0;">'
+        f'<span style="font-size:1.25rem;font-weight:800;color:{grade_color};line-height:1;">{final_score}</span>'
+        f'<span style="font-size:0.55rem;text-transform:uppercase;color:{grade_color};'
+        f'font-weight:700;letter-spacing:0.03em;">{grade}级</span>'
+        f'</div>'
+        f'<div style="font-size:0.75rem;font-weight:600;color:{C_TEXT};">'
+        f'<span style="background:{grade_color};color:white;padding:0.15rem 0.6rem;'
+        f'border-radius:0.3rem;font-size:0.7rem;">评级 {grade}</span>'
+        f'</div>'
+        f'</div>'
+        f'{bar_html}'
+        f'{risk_html}'
+        f'</div>'
+    )

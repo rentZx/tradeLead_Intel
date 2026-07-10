@@ -39,11 +39,17 @@ from src.search import (
 )
 from src.ui_styles import (
     C_PRIMARY,
+    C_PRIMARY_DARK,
     C_SUCCESS,
+    C_SUCCESS_BG,
     C_WARNING,
     C_DANGER,
+    C_DANGER_BG,
+    C_INFO,
+    C_PURPLE,
     C_TEXT_MUTED,
     C_BORDER,
+    C_GOLD,
     GRADE_COLORS,
     inject_css,
     main_header,
@@ -53,10 +59,13 @@ from src.ui_styles import (
     metric_card,
     callout,
     grade_badge,
+    grade_chip,
+    status_badge,
+    score_card,
 )
 from src.webpage_reader import companies_with_websites, read_company_website
 
-APP_VERSION = "V2.0-RC1"
+APP_VERSION = "V3.0-RC1"
 
 st.set_page_config(page_title="TradeLead Intel", page_icon="🌐", layout="wide")
 init_db()
@@ -66,20 +75,20 @@ init_db()
 # 侧边栏导航配置
 # ---------------------------------------------------------------------------
 NAV_GROUPS = [
-    ("📊 概览", ["📊 首页仪表盘"]),
-    ("📦 产品与线索", ["📦 产品库", "🏢 公司线索库", "🎭 演示数据"]),
-    ("🔍 搜索与采集", ["🔍 搜索任务", "🚀 自动搜索", "🌐 官网读取"]),
-    ("⚠️ 风控与背调", ["⚠️ 合规风险中心", "📋 背调报告"]),
-    ("💬 营销与跟进", ["📄 落地页/询盘", "✉️ 开发信生成器", "💬 CRM跟进"]),
-    ("⚙️ 系统", ["⚙️ 系统设置"]),
+    ("概览", ["首页仪表盘"]),
+    ("产品与线索", ["产品库", "公司线索库", "演示数据"]),
+    ("搜索与采集", ["搜索任务", "自动搜索", "官网读取"]),
+    ("风控与背调", ["合规风险中心", "背调报告"]),
+    ("营销与跟进", ["落地页/询盘", "开发信生成器", "CRM跟进"]),
+    ("系统", ["系统设置"]),
 ]
 
-# 页面 -> (icon, color) 映射，用于 page_header
+# 页面 -> (icon, color) 映射
 PAGE_META = {
     "首页仪表盘": ("dashboard", C_PRIMARY),
     "产品库": ("box", C_PRIMARY),
     "公司线索库": ("building", C_PRIMARY),
-    "演示数据": ("flask", "#8b5cf6"),
+    "演示数据": ("flask", C_PURPLE),
     "搜索任务": ("search", C_PRIMARY),
     "自动搜索": ("rocket", C_PRIMARY),
     "官网读取": ("globe", C_PRIMARY),
@@ -102,8 +111,7 @@ def main() -> None:
 
     all_page_names: list[str] = []
     for _, pages in NAV_GROUPS:
-        for p in pages:
-            all_page_names.append(p.split(" ", 1)[1] if " " in p else p)
+        all_page_names.extend(pages)
 
     # 如果 session_state 中的页面不在列表中，重置为首页
     current = st.session_state.current_page
@@ -111,16 +119,14 @@ def main() -> None:
         current = "首页仪表盘"
         st.session_state.current_page = current
 
-    # 渲染分组
-    selected = None
+    # 渲染分组导航
     for group_title, pages in NAV_GROUPS:
         sidebar_group(group_title)
-        for page_label in pages:
-            page_name = page_label.split(" ", 1)[1] if " " in page_label else page_label
+        for page_name in pages:
             is_active = page_name == current
             btn_type = "primary" if is_active else "secondary"
             if st.sidebar.button(
-                page_label,
+                page_name,
                 key=f"nav_{page_name}",
                 use_container_width=True,
                 type=btn_type,
@@ -164,17 +170,18 @@ def dashboard_page() -> None:
     icon, color = PAGE_META["首页仪表盘"]
     page_header(icon, "首页仪表盘", color)
 
-    # ---- 指标卡片 ----
+    # ---- V3 指标卡片 ----
     metrics = [
         ("产品总数", "SELECT COUNT(*) AS n FROM products", C_PRIMARY),
         ("线索公司", "SELECT COUNT(*) AS n FROM companies", C_SUCCESS),
-        ("已背调", "SELECT COUNT(*) AS n FROM due_diligence", "#8b5cf6"),
-        ("A/B 客户", "SELECT COUNT(*) AS n FROM companies WHERE final_grade IN ('A','B')", C_SUCCESS),
-        ("风险线索", "SELECT COUNT(*) AS n FROM companies WHERE risk_status != '未筛查'", C_DANGER),
+        ("已背调", "SELECT COUNT(*) AS n FROM due_diligence", C_PURPLE),
+        ("A/B 优质客户", "SELECT COUNT(*) AS n FROM companies WHERE final_grade IN ('A','B')", C_GOLD),
+        ("风险线索", "SELECT COUNT(*) AS n FROM companies WHERE risk_status NOT IN ('未筛查','未发现关键词风险') AND risk_status != ''", C_DANGER),
     ]
     cards_html = ""
-    for i, (label, sql, accent) in enumerate(metrics):
-        val = int(query_df(sql).iloc[0]["n"])
+    for label, sql, accent in metrics:
+        val_df = query_df(sql)
+        val = int(val_df.iloc[0]["n"]) if not val_df.empty else 0
         cards_html += f'<div style="flex:1;min-width:0;padding:0 0.4rem;">{metric_card(label, val, accent)}</div>'
     st.markdown(
         f'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">{cards_html}</div>',
@@ -184,50 +191,42 @@ def dashboard_page() -> None:
     left, right = st.columns([1.3, 1])
 
     with left:
-        st.markdown("##### 📋 最近公司线索")
-        st.dataframe(
-            query_df(
-                """
-                SELECT id, company_name, country, website, lead_status, final_grade, risk_status, created_at
-                FROM companies ORDER BY id DESC LIMIT 10
-                """
-            ),
-            width="stretch",
-            hide_index=True,
+        st.markdown("##### 最近公司线索")
+        leads_df = query_df(
+            """
+            SELECT id, company_name, country, website, lead_status, final_grade, risk_status, created_at
+            FROM companies ORDER BY id DESC LIMIT 10
+            """
         )
+        if not leads_df.empty:
+            st.dataframe(leads_df, width="stretch", hide_index=True)
+        else:
+            st.caption("暂无公司线索，去「自动搜索」或「公司线索库」添加吧。")
 
-        st.markdown("##### 📊 评级分布")
+        st.markdown("##### 评级分布")
         grade_df = query_df(
             """
             SELECT COALESCE(final_grade, '未评级') AS grade, COUNT(*) AS cnt
-            FROM companies
-            GROUP BY final_grade
-            ORDER BY grade
+            FROM companies GROUP BY final_grade ORDER BY grade
             """
         )
         if not grade_df.empty:
             grade_html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
+            total_rated = 0
             for _, row in grade_df.iterrows():
-                g = row["grade"]
+                g = str(row["grade"])
                 cnt = int(row["cnt"])
-                color = GRADE_COLORS.get(g, "#94a3b8")
-                grade_html += (
-                    f'<div style="background:{color}15;border:1px solid {color}30;'
-                    f'border-radius:0.5rem;padding:0.4rem 0.8rem;display:flex;'
-                    f'align-items:center;gap:0.4rem;">'
-                    f'<span style="background:{color};color:white;width:1.5rem;height:1.5rem;'
-                    f'border-radius:0.35rem;display:flex;align-items:center;justify-content:center;'
-                    f'font-weight:800;font-size:0.8rem;">{g}</span>'
-                    f'<span style="font-weight:700;color:{color};">{cnt}</span>'
-                    f"</div>"
-                )
+                if g in GRADE_COLORS:
+                    grade_html += grade_chip(g, cnt)
+                    total_rated += cnt
             grade_html += "</div>"
             st.markdown(grade_html, unsafe_allow_html=True)
+            st.caption(f"已评级 {total_rated} / 共 {len(leads_df) if not leads_df.empty else 0} 家公司")
         else:
             st.caption("暂无评级数据")
 
     with right:
-        st.markdown("##### ⚖️ 合规提醒")
+        st.markdown("##### 合规提醒")
         callout(
             "涉及机床、工业设备、二手设备、高精度设备、数控设备、塑料机械时，"
             "请人工核查 HS 编码、技术参数、最终用途、最终用户和出口申报要求。",
@@ -238,25 +237,25 @@ def dashboard_page() -> None:
             "warning",
         )
 
-        st.markdown("##### 📈 快速操作")
+        st.markdown("##### 快速操作")
         col_a, col_b, col_c = st.columns(3)
-        if col_a.button("📦 产品库", use_container_width=True):
+        if col_a.button("产品库", use_container_width=True, key="qa_products"):
             st.session_state.current_page = "产品库"
             st.rerun()
-        if col_b.button("🔍 搜索", use_container_width=True):
+        if col_b.button("搜索", use_container_width=True, key="qa_search"):
             st.session_state.current_page = "自动搜索"
             st.rerun()
-        if col_c.button("📋 背调", use_container_width=True):
+        if col_c.button("背调", use_container_width=True, key="qa_dd"):
             st.session_state.current_page = "背调报告"
             st.rerun()
         col_d, col_e, col_f = st.columns(3)
-        if col_d.button("🏢 线索库", use_container_width=True):
+        if col_d.button("线索库", use_container_width=True, key="qa_leads"):
             st.session_state.current_page = "公司线索库"
             st.rerun()
-        if col_e.button("✉️ 开发信", use_container_width=True):
+        if col_e.button("开发信", use_container_width=True, key="qa_outreach"):
             st.session_state.current_page = "开发信生成器"
             st.rerun()
-        if col_f.button("💬 CRM", use_container_width=True):
+        if col_f.button("CRM", use_container_width=True, key="qa_crm"):
             st.session_state.current_page = "CRM跟进"
             st.rerun()
 
@@ -677,7 +676,7 @@ def compliance_center_page() -> None:
         st.dataframe(pool_df, width="stretch", hide_index=True)
         if not pool_df.empty:
             st.download_button(
-                "📥 导出风险池 CSV",
+                "导出风险池 CSV",
                 pool_df.to_csv(index=False).encode("utf-8-sig"),
                 "risk_pool.csv",
                 "text/csv",
@@ -871,25 +870,22 @@ def due_diligence_page() -> None:
     st.markdown("**⚠️ 风险命中**")
     st.code(format_risk_hits(hits))
 
-    # ---- 评分展示卡片 ----
+    # ---- V3 评分展示 ----
     grade = score["final_grade"]
-    grade_color = GRADE_COLORS.get(grade, C_TEXT_MUTED)
     m1, m2, m3 = st.columns(3)
-    m1.markdown(
-        f"""<div style="background:#ffffff;border:1px solid {C_BORDER};
-    border-radius:0.75rem;padding:1rem 1.25rem;text-align:center;
-    box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-        <div style="color:{C_TEXT_MUTED};font-size:0.75rem;font-weight:600;
-        text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.5rem;">总分</div>
-        <div style="font-size:2.5rem;font-weight:800;color:{grade_color};line-height:1;">
-        {score["final_score"]}</div>
-        <div style="margin-top:0.4rem;">
-            <span style="background:{grade_color};color:white;padding:0.2rem 0.8rem;
-            border-radius:0.4rem;font-weight:700;font-size:0.9rem;">评级 {grade}</span>
-        </div>
-    </div>""",
-        unsafe_allow_html=True,
-    )
+    with m1:
+        st.markdown(
+            score_card(
+                final_score=int(score["final_score"]),
+                grade=grade,
+                business_match=int(score["business_match_score"]),
+                purchase_probability=int(score["purchase_probability_score"]),
+                authenticity=int(score["authenticity_score"]),
+                contactability=int(score["contactability_score"]),
+                risk_score=int(score["risk_score"]),
+            ),
+            unsafe_allow_html=True,
+        )
     m2.metric("风险扣分", score["risk_score"])
     m3.metric("整体置信度", diligence["confidence_score"])
 
@@ -1024,7 +1020,7 @@ def crm_page() -> None:
         st.success("跟进记录已保存。")
 
     st.dataframe(query_df("SELECT * FROM interactions ORDER BY id DESC"), width="stretch", hide_index=True)
-    st.download_button("📥 导出跟进记录 Excel", export_table("interactions"), "interactions.xlsx")
+    st.download_button("导出跟进记录 Excel", export_table("interactions"), "interactions.xlsx")
 
 
 def settings_page() -> None:
