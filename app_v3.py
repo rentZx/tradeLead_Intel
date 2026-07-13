@@ -38,9 +38,7 @@ from src.market_data import (
     get_regions, get_countries_for_region, get_cities_for_country,
     get_language_for_country, search_keywords_template,
 )
-from src.scraper import (
-    scrape_google_search, scrape_yellow_pages, run_acquisition,
-)
+from src.scraper import run_acquisition
 from src.diligence import run_diligence, rate_confidence
 from src.extractor import extract_contacts_from_html
 from src.outreach_v3 import generate_outreach, generate_landing_page
