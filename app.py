@@ -63,6 +63,13 @@ from src.ui_styles import (
     status_badge,
     score_card,
 )
+from src.free_leads import (
+    YELLOW_PAGE_TEMPLATES,
+    scrape_yellow_pages,
+    search_google_direct,
+    whois_batch_import,
+    search_google_maps,
+)
 from src.webpage_reader import companies_with_websites, read_company_website
 
 APP_VERSION = "V3.0-RC1"
@@ -77,7 +84,7 @@ init_db()
 NAV_GROUPS = [
     ("概览", ["首页仪表盘"]),
     ("产品与线索", ["产品库", "公司线索库", "演示数据"]),
-    ("搜索与采集", ["搜索任务", "自动搜索", "官网读取"]),
+    ("搜索与采集", ["搜索任务", "自动搜索", "官网读取", "免费获客"]),
     ("风控与背调", ["合规风险中心", "背调报告"]),
     ("营销与跟进", ["落地页/询盘", "开发信生成器", "CRM跟进"]),
     ("系统", ["系统设置"]),
@@ -92,6 +99,7 @@ PAGE_META = {
     "搜索任务": ("search", C_PRIMARY),
     "自动搜索": ("rocket", C_PRIMARY),
     "官网读取": ("globe", C_PRIMARY),
+    "免费获客": ("database", C_PRIMARY),
     "合规风险中心": ("shield", C_DANGER),
     "背调报告": ("clipboard-check", C_WARNING),
     "落地页/询盘": ("file-text", C_PRIMARY),
@@ -152,6 +160,8 @@ def main() -> None:
         auto_search_page()
     elif page == "官网读取":
         webpage_reader_page()
+    elif page == "免费获客":
+        free_leads_page()
     elif page == "合规风险中心":
         compliance_center_page()
     elif page == "背调报告":
@@ -605,6 +615,165 @@ def webpage_reader_page() -> None:
         params,
     )
     st.dataframe(snapshots_df, width="stretch", hide_index=True)
+
+
+def free_leads_page() -> None:
+    """免费获客页面 — 黄页采集 / Google搜索 / WHOIS / Google Maps"""
+    icon, color = PAGE_META["免费获客"]
+    page_header(icon, "免费获客", color)
+    st.caption("零成本获客渠道：黄页采集 · Google 直接搜索 · WHOIS 反查 · Google Maps 商家搜索")
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "黄页采集", "Google 搜索", "WHOIS 反查", "Google Maps",
+    ])
+
+    # ---- Tab 1: 黄页采集 ----
+    with tab1:
+        st.markdown("###### 方式一：预置模板")
+        tmpl_cols = st.columns(3)
+        template_map = {v["name"]: k for k, v in YELLOW_PAGE_TEMPLATES.items()}
+        template_names = [v["name"] for v in YELLOW_PAGE_TEMPLATES.values()]
+        selected_template_name = tmpl_cols[0].selectbox("选择黄页平台", template_names)
+        keyword = tmpl_cols[1].text_input("搜索关键词", value="plastic products", key="yp_keyword")
+        max_yp_pages = tmpl_cols[2].number_input("最大翻页数", 1, 10, 3, key="yp_pages")
+        default_ctry = tmpl_cols[0].text_input("默认国家", value="", key="yp_ctry",
+                                                 placeholder="如：哈萨克斯坦")
+
+        if st.button("开始采集（模板模式）", type="primary", key="yp_template_btn"):
+            with st.spinner("采集中..."):
+                result = scrape_yellow_pages(
+                    template_key=template_map[selected_template_name],
+                    keyword=keyword.strip(),
+                    max_pages=int(max_yp_pages),
+                    default_country=default_ctry.strip(),
+                )
+            _show_leads_result(result)
+
+        st.divider()
+
+        st.markdown("###### 方式二：自定义采集")
+        st.caption("输入任意 B2B 黄页网址和 CSS 选择器，通用解析页面中的公司列表。")
+        c1, c2 = st.columns(2)
+        custom_url = c1.text_input("采集网址", placeholder="https://example.com/directory", key="yp_custom_url")
+        c_list = c1.text_input("列表 CSS 选择器", placeholder="div.company-card", key="yp_list_sel")
+        c_name = c2.text_input("公司名 CSS", placeholder="h3 a", key="yp_name_sel")
+        c_ctry = c2.text_input("国家 CSS", placeholder=".location", key="yp_ctry_sel")
+        c_web = c1.text_input("网址 CSS", placeholder="a.website", key="yp_web_sel")
+        c_desc = c2.text_input("描述 CSS", placeholder=".description", key="yp_desc_sel")
+        c_next = c1.text_input("翻页 CSS（可选）", placeholder="a.next", key="yp_next_sel")
+
+        if st.button("开始采集（自定义模式）", key="yp_custom_btn"):
+            with st.spinner("采集中..."):
+                result = scrape_yellow_pages(
+                    custom_url=custom_url.strip(),
+                    custom_list_selector=c_list.strip(),
+                    custom_name_selector=c_name.strip(),
+                    custom_country_selector=c_ctry.strip(),
+                    custom_website_selector=c_web.strip(),
+                    custom_desc_selector=c_desc.strip(),
+                    custom_next_selector=c_next.strip(),
+                    max_pages=int(max_yp_pages),
+                )
+            _show_leads_result(result)
+
+    # ---- Tab 2: Google 直接搜索 ----
+    with tab2:
+        st.caption("直接抓取 Google 搜索结果页，无需 API Key。建议每次 10-20 条，间隔 5 秒以上。")
+        gc1, gc2 = st.columns([3, 1])
+        g_keyword = gc1.text_input(
+            "搜索关键词",
+            value="plastic products buyer Kazakhstan email",
+            key="goog_keyword",
+            placeholder="建议包含产品 + buyer/importer + 国家",
+        )
+        g_num = gc2.number_input("最多结果数", 5, 50, 20, 5, key="goog_num")
+
+        if st.button("搜索并导入", type="primary", key="goog_btn"):
+            with st.spinner("搜索中（约 3-5 秒）..."):
+                result = search_google_direct(
+                    keyword=g_keyword.strip(),
+                    num_results=int(g_num),
+                )
+            _show_leads_result(result)
+
+        callout(
+            "直接抓取 Google 可能遇到验证码（CAPTCHA）。若频繁使用请间隔 10 秒以上。"
+            "建议配合 SerpAPI 获得更稳定的结果。",
+            "warning",
+        )
+
+    # ---- Tab 3: WHOIS 反查 ----
+    with tab3:
+        st.caption("输入域名列表（每行一个），通过 WHOIS 查询注册人信息。适合已知竞争对手域名后反查。")
+        domains_text = st.text_area(
+            "域名列表（每行一个）",
+            value="example.com\n",
+            height=120,
+            key="whois_domains",
+        )
+        if st.button("WHOIS 批量查询并导入", type="primary", key="whois_btn"):
+            domains = [d.strip() for d in domains_text.split("\n") if d.strip()]
+            with st.spinner(f"查询 {len(domains)} 个域名..."):
+                result = whois_batch_import(domains)
+            _show_leads_result(result)
+
+        callout(
+            "WHOIS 查询速率受限于各注册局服务器。批量查询会自动间隔 0.8-2 秒。",
+            "info",
+        )
+
+    # ---- Tab 4: Google Maps ----
+    with tab4:
+        st.caption("使用 Google Places API Text Search（免费额度 $200/月 ≈ 28,000 次查询）。需配置 API Key。")
+        mc1, mc2, mc3 = st.columns(3)
+        maps_query = mc1.text_input(
+            "搜索词",
+            value="plastic manufacturers in Dubai",
+            key="maps_query",
+        )
+        maps_location = mc2.text_input(
+            "中心坐标（可选）",
+            value="",
+            key="maps_location",
+            placeholder="如：25.2048,55.2708（迪拜）",
+        )
+        maps_radius = mc3.number_input("半径（米）", 5000, 100000, 50000, 5000, key="maps_radius")
+        maps_api_key = mc1.text_input("API Key（留空读取 GOOGLE_MAPS_API_KEY 环境变量）", type="password", key="maps_apikey")
+        maps_max = mc2.number_input("最多结果数", 5, 60, 20, 5, key="maps_max")
+
+        if st.button("Google Maps 搜索并导入", type="primary", key="maps_btn"):
+            with st.spinner("搜索中..."):
+                result = search_google_maps(
+                    query=maps_query.strip(),
+                    api_key=maps_api_key.strip(),
+                    location=maps_location.strip(),
+                    radius=int(maps_radius),
+                    max_results=int(maps_max),
+                )
+            _show_leads_result(result)
+
+        callout(
+            "需要 Google Cloud 账号并启用 Places API。免费额度 $200/月。"
+            "也可以用 Google CSE 的 API Key 直接复用。",
+            "info",
+        )
+
+
+def _show_leads_result(result: dict) -> None:
+    """统一展示采集结果。"""
+    if result.get("errors"):
+        for err in result["errors"]:
+            st.error(err)
+    if result["total"] == 0 and not result.get("errors"):
+        st.warning("未采集到任何结果。请检查网址、选择器或关键词是否正确。")
+    else:
+        st.success(
+            f"采集完成：共获取 {result['total']} 条结果，"
+            f"新增导入 {result['imported']} 条，"
+            f"去重跳过 {result['skipped']} 条。"
+        )
+    if result.get("results"):
+        st.dataframe(pd.DataFrame(result["results"]), width="stretch", hide_index=True)
 
 
 def compliance_center_page() -> None:
