@@ -147,14 +147,49 @@ def get_language_for_country(country_cn: str) -> str:
     return COUNTRY_LANGUAGES.get(country_cn, "en")
 
 
-def search_keywords_template(product_keywords: str, country_en: str, city_en: str = "") -> list[str]:
-    """Generate search keywords for different channels."""
-    keywords = [kw.strip() for kw in product_keywords.split(",") if kw.strip()]
-    queries = []
+# 品类 → 目标客户类型
+CATEGORY_BUYER_TYPES: dict[str, list[str]] = {
+    "默认": ["hardware store", "building materials supplier", "construction supply", "trading company"],
+    "建筑五金": ["hardware store", "building materials", "construction supply", "tools supplier", "五金店", "建材商"],
+    "塑料制品": ["plastic products distributor", "household goods wholesaler", "kitchenware store", "home supply"],
+    "塑料机械": ["plastic machinery dealer", "recycling equipment supplier", "industrial equipment trader"],
+    "普通二手机床": ["used machinery dealer", "metalworking supplier", "industrial equipment trader", "workshop equipment"],
+    "电子元器件": ["electronics components distributor", "electrical supply store", "industrial parts supplier"],
+    "纺织品": ["fabric wholesaler", "textile distributor", "garment supplier"],
+    "汽车配件": ["auto parts store", "car accessories distributor", "vehicle spare parts supplier"],
+    "农产品": ["food importer", "agricultural products trader", "grocery wholesaler"],
+}
+
+# 补充：地区特有搜索词
+REGION_BUYER_TERMS: dict[str, list[str]] = {
+    "中东": ["trading company", "general trading", "building materials trading"],
+    "非洲": ["wholesale supplier", "import company", "general merchant"],
+    "中亚": ["bazaar wholesaler", "construction materials", "строительные материалы"],
+    "东南亚": ["hardware shop", "construction supply", "building materials shop"],
+    "南亚": ["hardware store", "building material dealer", "construction company"],
+    "拉美": ["ferreteria", "materiales de construccion", "ferragens", "distribuidora"],
+    "东欧": ["строительный магазин", "building supply", "construction wholesaler"],
+}
+
+def search_keywords_template(product_keywords: str, country_en: str, city_en: str = "", category: str = "", region: str = "") -> list[str]:
+    """Generate buyer-oriented search keywords for the target market."""
     location = f"{city_en} {country_en}" if city_en else country_en
-    for kw in keywords:
-        queries.append(f'{kw} importer {location}')
-        queries.append(f'{kw} wholesaler {location}')
-        queries.append(f'{kw} distributor {location}')
-        queries.append(f'{kw} supplier {location}')
+
+    # Get buyer types for this product category
+    buyer_types = CATEGORY_BUYER_TYPES.get(category, CATEGORY_BUYER_TYPES["默认"])
+    # Add region-specific terms
+    region_terms = REGION_BUYER_TERMS.get(region, [])
+
+    queries = []
+    for bt in buyer_types[:4]:
+        queries.append(f'"{bt}" {location}')
+    for bt in buyer_types[:2]:
+        queries.append(f'{bt} {location}')
+    for rt in region_terms[:2]:
+        queries.append(f'{rt} {location}')
+
+    # Also include product keywords for niche distributors
+    main_kw = product_keywords.split(",")[0].strip()
+    queries.append(f'{main_kw} distributor {location}')
+
     return queries

@@ -100,15 +100,13 @@ def run_acquisition(
     country_cn: str,
     city_en: str = "",
     channels: list[str] | None = None,
-    yellow_page_sources: list[str] | None = None,
+    category: str = "",
 ) -> dict:
     """Run lead acquisition. Raises RuntimeError if network unreachable."""
     from src.db_v3 import add_lead, create_task, update_task
 
     if channels is None:
         channels = ["web_search"]
-    if yellow_page_sources is None:
-        yellow_page_sources = []
 
     if not is_network_available():
         raise RuntimeError(
@@ -117,7 +115,7 @@ def run_acquisition(
             "  ssh -R 17890:127.0.0.1:7892 -N ubuntu@49.233.197.213"
         )
 
-    keywords = search_keywords_template(product_keywords, country_cn, city_en)
+    keywords = search_keywords_template(product_keywords, country_cn, city_en, category, region)
     summary = {}
 
     for channel in channels:
@@ -127,7 +125,7 @@ def run_acquisition(
             "country": country_cn,
             "city": city_en,
             "channel": channel,
-            "channel_source": ",".join(yellow_page_sources),
+            "channel_source": "",
             "search_keyword": keywords[0] if keywords else "",
         })
         update_task(task_id, status="running")

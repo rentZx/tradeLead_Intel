@@ -345,6 +345,7 @@ elif page == "获客":
                         country_cn=selected_country,
                         city_en=city_en,
                         channels=channels,
+                        category=product.get("category", ""),
                     )
                     st.success("✅ 搜索完成！")
                     for ch, count in summary.items():
