@@ -344,16 +344,12 @@ elif page == "获客":
     # Step 5: Execute
     st.subheader("⑤ 开始获客")
 
-    # Check network status
     from src.scraper import is_network_available
-    network_ok = is_network_available()
-    if not network_ok:
-        st.warning("⚠️ 当前服务器无法直连海外搜索引擎（网络限制）。将使用**模拟数据**测试流程。配置代理后可切换真实搜索。")
-
-    if network_ok:
-        st.caption("真实搜索模式，约需 1-3 分钟")
-    else:
-        st.caption("模拟数据模式，秒级返回结果")
+    if not is_network_available():
+        st.warning(
+            "当前服务器无法直连海外搜索引擎，搜索将立即返回结果（可能为空）。\n\n"
+            "配置代理后可使用真实搜索：在设置页面配置代理地址。"
+        )
 
     channels = []
     if use_yellowpages:
@@ -387,8 +383,10 @@ elif page == "获客":
                     if st.button("查看线索 →", use_container_width=True):
                         st.session_state.page = "线索库"
                         st.rerun()
+                except RuntimeError as e:
+                    st.error(str(e))
                 except Exception as e:
-                    st.error(f"搜索过程出错：{e}")
+                    st.error(f"搜索出错：{e}")
 
 # ═══════════════════════════════════════════════════════════
 #  Page: 线索库
