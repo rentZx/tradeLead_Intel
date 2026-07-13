@@ -23,4 +23,5 @@ jobs:
             pip install -r requirements.txt
             python3 -c "import sqlite3; conn=sqlite3.connect('data/tradelead.sqlite3'); conn.executescript(open('schema.sql').read()); conn.close()" 2>/dev/null || true
             sudo systemctl restart tradelead-intel
+            sudo systemctl restart tradelead-intel-v3
             echo "Deploy completed at $(date)"
