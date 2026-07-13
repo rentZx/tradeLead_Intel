@@ -60,7 +60,7 @@ def is_network_available() -> bool:
     try:
         s = _get_session()
         resp = s.get("https://lite.duckduckgo.com/lite/?q=test", timeout=6)
-        return resp.status_code == 200
+        return resp.status_code in (200, 202)
     except Exception:
         return False
 
@@ -75,7 +75,7 @@ def search_web(keyword: str, max_results: int = 8) -> list[dict]:
     try:
         s = _get_session()
         resp = s.get(url, timeout=REQUEST_TIMEOUT)
-        if resp.status_code != 200:
+        if resp.status_code not in (200, 202):
             return []
         resp.encoding = resp.apparent_encoding or "utf-8"
         soup = BeautifulSoup(resp.text, "html.parser")
