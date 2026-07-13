@@ -345,7 +345,17 @@ elif page == "获客":
 
     # Step 5: Execute
     st.subheader("⑤ 开始获客")
-    st.caption("系统会自动排队搜索，请耐心等待（约需 2-5 分钟）")
+
+    # Check network status
+    from src.scraper import is_network_available
+    network_ok = is_network_available()
+    if not network_ok:
+        st.warning("⚠️ 当前服务器无法直连海外搜索引擎（网络限制）。将使用**模拟数据**测试流程。配置代理后可切换真实搜索。")
+
+    if network_ok:
+        st.caption("真实搜索模式，约需 1-3 分钟")
+    else:
+        st.caption("模拟数据模式，秒级返回结果")
 
     channels = []
     if use_yellowpages:
@@ -613,6 +623,18 @@ elif page == "设置":
     ]
     for src, label in default_sources:
         st.checkbox(label, value=True, key=f"src_{src}")
+
+    st.divider()
+    st.subheader("🌐 代理配置（可选）")
+    st.caption("如果服务器在国内，搜索引擎无法直接访问。配置代理后可使用真实搜索。")
+    proxy_url = st.text_input("代理地址", value=get_setting("proxy_url") or "", placeholder="http://user:pass@host:port 或 socks5://host:port", key="set_proxy")
+    if st.button("💾 保存代理设置"):
+        set_setting("proxy_url", proxy_url)
+        st.success("已保存！重启服务后生效。")
+
+    from src.scraper import is_network_available
+    net_status = "✅ 网络正常，可使用真实搜索" if is_network_available() else "⚠️ 无法直连海外搜索引擎（国内服务器正常现象）"
+    st.caption(net_status)
 
     st.divider()
     st.subheader("⚠️ 免责声明")
