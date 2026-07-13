@@ -1,12 +1,11 @@
 """
 TradeLead V3.0 — Lead Scraper
-Real search only, no mock data. Proxy-aware.
+Uses Bing search via proxy. No mock data.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import time
 import random
 from urllib.parse import urlparse, quote_plus
@@ -22,9 +21,9 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
 ]
 
-REQUEST_TIMEOUT = 8
-MIN_DELAY = 0.4
-MAX_DELAY = 1.0
+REQUEST_TIMEOUT = 10
+MIN_DELAY = 0.5
+MAX_DELAY = 1.5
 
 PROXY = os.environ.get("TRADELEAD_PROXY", "")
 
@@ -48,28 +47,20 @@ def _get_session() -> requests.Session:
     return s
 
 
-def _get_domain(url: str) -> str:
-    try:
-        return urlparse(url).netloc.lower().replace("www.", "")
-    except Exception:
-        return ""
-
-
 def is_network_available() -> bool:
-    """Quick connectivity check (1 attempt, short timeout)."""
     try:
         s = _get_session()
-        resp = s.get("https://lite.duckduckgo.com/lite/?q=test", timeout=6)
+        resp = s.get("https://www.bing.com/search?q=test&count=1", timeout=6)
         return resp.status_code in (200, 202)
     except Exception:
         return False
 
 
 def search_web(keyword: str, max_results: int = 8) -> list[dict]:
-    """Search via DDG lite HTML. Returns empty list on failure."""
+    """Search Bing. Returns [{title, url, snippet, domain}]."""
     results = []
     query = quote_plus(keyword)
-    url = f"https://lite.duckduckgo.com/lite/?q={query}"
+    url = f"https://www.bing.com/search?q={query}&count={max_results}&setlang=en"
 
     time.sleep(random.uniform(MIN_DELAY, MAX_DELAY))
     try:
@@ -82,22 +73,22 @@ def search_web(keyword: str, max_results: int = 8) -> list[dict]:
     except Exception:
         return []
 
-    rows = soup.select("table tr") or soup.select("a.result-link")
-    for row in rows[:max_results]:
-        link = row.select_one("a[rel='nofollow'], a.result-link, a[href]")
-        if not link:
+    for item in soup.select("li.b_algo"):
+        title_el = item.select_one("h2 a")
+        if not title_el:
             continue
-        href = link.get("href", "")
-        if "uddg=" in href:
-            from urllib.parse import unquote
-            href = unquote(href.split("uddg=")[-1].split("&")[0])
+        href = title_el.get("href", "")
         if not href.startswith("http"):
             continue
-        title_el = row.select_one("a.result-link, td a")
-        title = title_el.get_text(strip=True) if title_el else href[:60]
-        snippet_el = row.select_one("td.result-snippet")
+        title = title_el.get_text(strip=True)
+        snippet_el = item.select_one(".b_caption p, .b_lineclamp2, .b_algoSlug")
         snippet = snippet_el.get_text(strip=True) if snippet_el else ""
-        results.append({"title": title, "url": href, "snippet": snippet, "domain": _get_domain(href)})
+        results.append({
+            "title": title, "url": href,
+            "snippet": snippet, "domain": urlparse(href).netloc.replace("www.", ""),
+        })
+        if len(results) >= max_results:
+            break
 
     return results
 
@@ -111,24 +102,19 @@ def run_acquisition(
     channels: list[str] | None = None,
     yellow_page_sources: list[str] | None = None,
 ) -> dict:
-    """
-    Run lead acquisition. Returns {channel: lead_count}.
-    Raises RuntimeError if network is unreachable.
-    """
+    """Run lead acquisition. Raises RuntimeError if network unreachable."""
     from src.db_v3 import add_lead, create_task, update_task
 
     if channels is None:
-        channels = ["web_search", "yellow_pages"]
+        channels = ["web_search"]
     if yellow_page_sources is None:
-        yellow_page_sources = ["europages.com", "tradekey.com"]
+        yellow_page_sources = []
 
-    # Fast connectivity check before doing anything
     if not is_network_available():
         raise RuntimeError(
-            "⚠️ 当前服务器无法访问海外搜索引擎（国内服务器受网络限制）。\n\n"
-            "解决方案：在设置页面配置代理地址，或在启动服务时设置环境变量：\n"
-            "TRADELEAD_PROXY=http://代理IP:端口\n"
-            "例如：sudo TRADELEAD_PROXY=http://127.0.0.1:7890 systemctl restart tradelead-intel-v3"
+            "当前服务器无法访问海外搜索引擎。\n"
+            "请确保代理隧道已连通：\n"
+            "  ssh -R 17890:127.0.0.1:7892 -N ubuntu@49.233.197.213"
         )
 
     keywords = search_keywords_template(product_keywords, country_cn, city_en)
@@ -149,38 +135,26 @@ def run_acquisition(
         leads_found = 0
         seen_domains: set = set()
 
-        if channel in ("web_search", "google_search"):
-            for kw in keywords[:3]:
+        if channel in ("web_search", "google_search", "yellow_pages"):
+            for kw in keywords[:4]:
                 results = search_web(kw, max_results=6)
                 for r in results:
-                    domain = r.get("domain", "")
-                    if domain in seen_domains or not r.get("title") or domain.endswith(".example.com"):
+                    domain = r["domain"]
+                    if domain in seen_domains:
                         continue
                     seen_domains.add(domain)
                     add_lead({
-                        "task_id": task_id, "company_name": r["title"].split(" —")[0].strip(),
-                        "website": r["url"], "source_channel": "网络搜索",
-                        "source_url": r["url"], "match_keyword": kw, "domain": domain,
-                        "country": country_cn, "city": city_en,
-                        "business_summary": r.get("snippet", ""), "confidence": "unknown",
-                    })
-                    leads_found += 1
-
-        elif channel in ("yellow_pages",):
-            for kw in keywords[:3]:
-                q = f"site:{yellow_page_sources[0]} {kw}" if yellow_page_sources else f"{kw} importer distributor"
-                results = search_web(q, max_results=5)
-                for r in results:
-                    domain = r.get("domain", "")
-                    if domain in seen_domains or not r.get("title") or domain.endswith(".example.com"):
-                        continue
-                    seen_domains.add(domain)
-                    add_lead({
-                        "task_id": task_id, "company_name": r["title"].split(" —")[0].strip(),
-                        "website": r["url"], "source_channel": "黄页采集",
-                        "source_url": r["url"], "match_keyword": kw, "domain": domain,
-                        "country": country_cn, "city": city_en,
-                        "business_summary": r.get("snippet", ""), "confidence": "unknown",
+                        "task_id": task_id,
+                        "company_name": r["title"][:100],
+                        "website": r["url"],
+                        "source_channel": "网络搜索",
+                        "source_url": r["url"],
+                        "match_keyword": kw,
+                        "domain": domain,
+                        "country": country_cn,
+                        "city": city_en,
+                        "business_summary": r.get("snippet", "")[:200],
+                        "confidence": "unknown",
                     })
                     leads_found += 1
 

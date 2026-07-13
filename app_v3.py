@@ -307,29 +307,10 @@ elif page == "获客":
 
     st.divider()
 
-    # Step 3: Select channels
-    st.subheader("③ 选择获客渠道")
-
-    col_a, col_b, col_c, col_d = st.columns(4)
-    with col_a:
-        use_yellowpages = st.checkbox("📒 黄页采集", value=True)
-        if use_yellowpages:
-            yp_sources = st.multiselect(
-                "黄页来源",
-                ["europages.com", "kompass.com", "tradekey.com", "yellowpages.ae",
-                 "yellowpages.com.ng", "exportersindia.com", "alibaba.com"],
-                default=["tradekey.com", "europages.com"],
-            )
-    with col_b:
-        use_google = st.checkbox("🔍 Google搜索", value=True)
-    with col_c:
-        use_whois = st.checkbox("🌐 WHOIS反查", value=False)
-        if use_whois:
-            st.caption("对搜索到的域名进行WHOIS查询")
-    with col_d:
-        use_maps = st.checkbox("📍 Google Maps", value=False)
-        if use_maps:
-            st.caption("需要配置 Google API Key（免费额度）")
+    # Step 3: Select search mode
+    st.subheader("③ 搜索设置")
+    use_bing = st.checkbox("🔍 联网搜索（Bing）", value=True, help="通过 Bing 搜索目标国家的潜在客户")
+    channels = ["web_search"] if use_bing else []
 
     st.divider()
 
@@ -347,23 +328,13 @@ elif page == "获客":
     from src.scraper import is_network_available
     if not is_network_available():
         st.warning(
-            "当前服务器无法直连海外搜索引擎，搜索将立即返回结果（可能为空）。\n\n"
-            "配置代理后可使用真实搜索：在设置页面配置代理地址。"
+            "当前服务器无法访问海外搜索引擎。请确保代理隧道已连通：\n\n"
+            "`ssh -R 17890:127.0.0.1:7892 -N ubuntu@49.233.197.213`"
         )
-
-    channels = []
-    if use_yellowpages:
-        channels.append("yellow_pages")
-    if use_google:
-        channels.append("google_search")
-    if use_whois:
-        channels.append("whois")
-    if use_maps:
-        channels.append("google_maps")
 
     if st.button("🚀 开始搜索", use_container_width=True, type="primary", disabled=not channels):
         if not channels:
-            st.error("请至少选择一个获客渠道")
+            st.error("请勾选联网搜索")
         else:
             with st.spinner(f"正在搜索... 产品: {product['product_name_en']} | 市场: {selected_country} {city_en}"):
                 try:
@@ -374,7 +345,6 @@ elif page == "获客":
                         country_cn=selected_country,
                         city_en=city_en,
                         channels=channels,
-                        yellow_page_sources=yp_sources if use_yellowpages else None,
                     )
                     st.success("✅ 搜索完成！")
                     for ch, count in summary.items():
