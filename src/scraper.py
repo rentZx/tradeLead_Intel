@@ -372,7 +372,7 @@ def run_acquisition(
     Master function: run lead acquisition across channels.
     Returns {channel: lead_count}
     """
-    from src.db_v3 import add_lead, create_task, get_task, update_task
+    from src.db_v3 import add_lead, create_task, update_task
     from src.market_data import get_language_for_country
 
     if channels is None:
