@@ -150,26 +150,33 @@ def get_language_for_country(country_cn: str) -> str:
 # 品类 → 目标客户类型
 CATEGORY_BUYER_TYPES: dict[str, list[str]] = {
     "默认": ["hardware store", "building materials supplier", "construction supply", "trading company"],
-    "建筑五金": ["hardware store", "building materials", "construction supply", "tools supplier", "五金店", "建材商"],
+    "建筑五金": ["hardware store", "building materials", "construction supply", "tools supplier"],
     "塑料制品": ["plastic products distributor", "household goods wholesaler", "kitchenware store", "home supply"],
     "塑料机械": ["plastic machinery dealer", "recycling equipment supplier", "industrial equipment trader"],
-    "普通二手机床": ["used machinery dealer", "metalworking supplier", "industrial equipment trader", "workshop equipment"],
-    "电子元器件": ["electronics components distributor", "electrical supply store", "industrial parts supplier"],
-    "纺织品": ["fabric wholesaler", "textile distributor", "garment supplier"],
+    "普通二手机床": ["used machinery dealer", "metalworking supplier", "industrial equipment trader"],
     "汽车配件": ["auto parts store", "car accessories distributor", "vehicle spare parts supplier"],
+    "纺织品": ["fabric wholesaler", "textile distributor", "garment supplier"],
     "农产品": ["food importer", "agricultural products trader", "grocery wholesaler"],
 }
 
-# 补充：地区特有搜索词
 REGION_BUYER_TERMS: dict[str, list[str]] = {
     "中东": ["trading company", "general trading", "building materials trading"],
     "非洲": ["wholesale supplier", "import company", "general merchant"],
-    "中亚": ["bazaar wholesaler", "construction materials", "строительные материалы"],
+    "中亚": ["construction materials", "wholesale market"],
     "东南亚": ["hardware shop", "construction supply", "building materials shop"],
     "南亚": ["hardware store", "building material dealer", "construction company"],
     "拉美": ["ferreteria", "materiales de construccion", "ferragens", "distribuidora"],
-    "东欧": ["строительный магазин", "building supply", "construction wholesaler"],
+    "东欧": ["building supply", "construction wholesaler"],
 }
+
+
+def get_country_code(country_cn: str) -> str:
+    """Get ISO country code from Chinese country name."""
+    for region_data in REGION_COUNTRIES.values():
+        for code, name in region_data:
+            if name == country_cn:
+                return code
+    return ""
 
 def search_keywords_template(product_keywords: str, country_en: str, city_en: str = "", category: str = "", region: str = "") -> list[str]:
     """Generate buyer-oriented search keywords for the target market."""

@@ -13,7 +13,7 @@ from urllib.parse import urlparse, quote_plus
 import requests
 from bs4 import BeautifulSoup
 
-from src.market_data import search_keywords_template
+from src.market_data import search_keywords_template, get_country_code
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36",
@@ -56,11 +56,15 @@ def is_network_available() -> bool:
         return False
 
 
-def search_web(keyword: str, max_results: int = 8) -> list[dict]:
+def search_web(keyword: str, max_results: int = 8, country_code: str = "") -> list[dict]:
     """Search Bing. Returns [{title, url, snippet, domain}]."""
     results = []
     query = quote_plus(keyword)
-    url = f"https://www.bing.com/search?q={query}&count={max_results}&setlang=en"
+    # Build URL with country targeting
+    if country_code:
+        url = f"https://www.bing.com/search?q={query}&count={max_results}&setlang=en&cc={country_code}"
+    else:
+        url = f"https://www.bing.com/search?q={query}&count={max_results}&setlang=en"
 
     time.sleep(random.uniform(MIN_DELAY, MAX_DELAY))
     try:
@@ -116,6 +120,7 @@ def run_acquisition(
         )
 
     keywords = search_keywords_template(product_keywords, country_cn, city_en, category, region)
+    country_code = get_country_code(country_cn)
     summary = {}
 
     for channel in channels:
@@ -135,7 +140,7 @@ def run_acquisition(
 
         if channel in ("web_search", "google_search", "yellow_pages"):
             for kw in keywords[:4]:
-                results = search_web(kw, max_results=6)
+                results = search_web(kw, max_results=6, country_code=country_code)
                 for r in results:
                     domain = r["domain"]
                     if domain in seen_domains:
