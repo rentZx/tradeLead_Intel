@@ -229,7 +229,7 @@ elif page == "产品":
                 desc_cn = st.text_area("中文描述", placeholder="产品介绍...")
                 spec = st.text_input("规格/型号", placeholder="如：IA-10×100")
                 fob = st.number_input("FOB报价 (USD)", min_value=0.0, step=0.01, format="%.3f")
-                images = st.file_uploader("产品图片（可多选）", accept=["png", "jpg", "jpeg"], type=["png", "jpg", "jpeg"], accept_multiple_images=True)  # Note: accept_multiple_images is for newer Streamlit
+                images = st.file_uploader("产品图片（可多选）", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
             with col2:
                 en = st.text_input("英文产品名 *", placeholder="如：Insulation Anchor")
