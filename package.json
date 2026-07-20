@@ -1,0 +1,7 @@
+{
+  "name": "tradelead-intel",
+  "private": true,
+  "scripts": {
+    "dev": "streamlit run app_v3.py"
+  }
+}
