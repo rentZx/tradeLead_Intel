@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import requests
 
 from src.db import execute, get_connection, query_df, update
+from src.provider_gateway import provider_configured, provider_request
 from src.prompts import deterministic_keywords
 
 LANGUAGE_KEYS = {
@@ -248,10 +249,16 @@ def mock_search(keyword: str, country: str, language: str, limit: int) -> list[S
 
 
 def serpapi_search(keyword: str, country: str, language: str, api_key: str, limit: int) -> list[SearchResult]:
-    require_key(api_key, "SERPAPI_API_KEY")
-    response = requests.get(
+    if not api_key and not provider_configured("serpapi", "SERPAPI_API_KEY"):
+        require_key(api_key, "SERPAPI_API_KEY")
+    params = {"engine": "google", "q": keyword, "num": limit}
+    if api_key:
+        params["api_key"] = api_key
+    response = provider_request(
+        "serpapi",
+        "GET",
         "https://serpapi.com/search.json",
-        params={"engine": "google", "q": keyword, "api_key": api_key, "num": limit},
+        params=params,
         timeout=30,
     )
     response.raise_for_status()

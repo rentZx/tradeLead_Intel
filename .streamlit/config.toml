@@ -5,11 +5,42 @@ gatherUsageStats = false
 headless = true
 
 [theme]
-primaryColor = "#2563eb"
-backgroundColor = "#f8fafc"
-secondaryBackgroundColor = "#f1f5f9"
-textColor = "#1e293b"
-font = "sans serif"
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#EEF2F6"
+textColor = "#172033"
+linkColor = "#0F766E"
+borderColor = "#DCE3EA"
+codeBackgroundColor = "#EEF2F6"
+redColor = "#C2414B"
+orangeColor = "#B45309"
+yellowColor = "#A16207"
+greenColor = "#15803D"
+blueColor = "#2563EB"
+violetColor = "#7C3AED"
+grayColor = "#64748B"
+chartCategoricalColors = ["#0F766E", "#2563EB", "#D97706", "#7C3AED", "#C2414B", "#0891B2", "#64748B"]
+dataframeBorderColor = "#DCE3EA"
+dataframeHeaderBackgroundColor = "#EEF2F6"
+font = "sans-serif"
+headingFont = "sans-serif"
+baseFontSize = 15
+baseFontWeight = 400
+headingFontSizes = ["32px", "24px", "20px", "17px", "15px", "13px"]
+headingFontWeights = [700, 650, 650, 600, 600, 600]
+linkUnderline = false
+baseRadius = "10px"
+buttonRadius = "8px"
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.sidebar]
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#1E293B"
+textColor = "#F8FAFC"
+primaryColor = "#2DD4BF"
+borderColor = "#27364F"
 
 [ui]
 hideTopBar = true

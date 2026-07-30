@@ -1,5 +1,67 @@
 # TradeLead Intel 外贸线索情报系统
 
+> 当前开发主线：V3.0-RC1。V2 入口和模块暂时保留用于兼容，新增功能请使用 `app_v3.py`。
+
+## V3 快速试用
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe scripts\verify_v3.py
+.\.venv\Scripts\python.exe -m streamlit run app_v3.py --server.address 127.0.0.1 --server.port 8501
+```
+
+浏览器访问 `http://127.0.0.1:8501`。V3 支持输入中文产品信息后自动推断英文产品名、
+搜索关键词、经销商类型和工程客户类型；未命中内置知识库时，需要补充英文名或关键词。
+
+搜索渠道支持免费的 DuckDuckGo、公开黄页、OpenStreetMap，以及可配置的 Brave、
+Google Places、SerpAPI、Foursquare、OpenCorporates 和 People Data Labs。国内服务器
+可设置 `TRADELEAD_PROXY` 访问公开网页，商业 API 则可通过固定服务白名单网关安全中转；
+没有海外出口时，产品管理、线索库、导出、开发信和落地页仍可离线使用。
+
+目标市场按“大区域 → 国家 → 州/省/行政区 → 城市”四级选择。州省和城市均可不选，
+并提供英文名手工输入；预置城市覆盖所有当前国家的主要商业、港口和工业城市。
+
+搜索结果进入线索库前会按具体产品执行买家资格判定：
+
+- 区分经销/渠道客户、终端需求方、渠道兼终端和角色待确认
+- 分别计算产品匹配、渠道匹配、终端匹配、需求信号和可触达性
+- 官网背调读取公开的产品、目录、About 和 Contact 页面
+- 保存匹配证据、判定理由和淘汰原因
+- 结果分为合格、高潜、待人工复核和已淘汰
+
+资格结果按“公司 × 产品”保存。“资料可信度”只表示官网和联系方式完整程度，
+“推广资格”才表示该公司是否值得针对当前产品进行开发。
+
+当前 V3 获客渠道：
+
+- DuckDuckGo 免费网页搜索
+- 按国家选择的公开黄页（阿联酋、尼日利亚、南非、肯尼亚、印度、土耳其）
+- OpenStreetMap/Overpass 公开商家数据
+- Brave Search API（`BRAVE_SEARCH_API_KEY`）
+- Google Places（`GOOGLE_MAPS_API_KEY`）
+- SerpAPI 第三方搜索（`SERPAPI_API_KEY`）
+- Foursquare Places（`FOURSQUARE_API_KEY`）
+- OpenCorporates 企业注册（`OPENCORPORATES_API_TOKEN`）
+- People Data Labs 企业库（`PDL_API_KEY`）
+
+旧版 Bing Search API 已停止服务，Google Custom Search 也不再面向新客户，因此不作为
+V3 的长期渠道。多个渠道可以同时运行，系统按域名、电话和公司名统一去重。
+
+### 国内服务器的商业 API 网关
+
+`api/gateway.ts` 是固定服务白名单网关，不接受任意目标 URL。建议部署在海外边缘平台，
+把商业渠道 API Key 只配置在网关环境变量中，并为主系统与网关设置同一个随机长令牌。
+国内主系统只需：
+
+```text
+TRADELEAD_API_GATEWAY_URL=https://your-overseas-domain.example/api/gateway
+TRADELEAD_API_GATEWAY_TOKEN=请替换为随机长令牌
+TRADELEAD_GATEWAY_SERVICES=brave,google_places,serpapi,foursquare,opencorporates,pdl
+```
+
+网关端配置 `TRADELEAD_GATEWAY_TOKEN` 以及实际启用渠道的 API Key。公开网页代理
+`api/proxy.ts` 与商业 API 网关用途不同；商业 Key 不应通过公开网页代理传输。
+
 版本：V2.0-RC1
 
 本项目是面向 B2B 外贸获客、公司背调、合规筛查、产品落地页和询盘管理的本地版系统。技术栈为 Python + Streamlit + SQLite。

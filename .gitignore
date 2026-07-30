@@ -17,6 +17,7 @@ work/
 
 # Generated outputs and runtime logs
 outputs/landing_pages/*.html
+outputs/product_images/
 exports/*
 logs/*
 

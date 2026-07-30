@@ -9,7 +9,9 @@ from __future__ import annotations
 import re
 import time
 import random
+import os
 from urllib.parse import urljoin, urlparse
+from urllib.parse import urlencode
 
 import requests
 from bs4 import BeautifulSoup
@@ -24,7 +26,11 @@ USER_AGENTS = [
 ]
 
 
-def run_diligence(lead_id: int, website: str) -> dict:
+def run_diligence(
+    lead_id: int,
+    website: str,
+    target_keywords: str | list[str] = "",
+) -> dict:
     """
     Visit a company's website and extract business intelligence.
     Returns diligence result dict.
@@ -35,12 +41,16 @@ def run_diligence(lead_id: int, website: str) -> dict:
         "website_title": "",
         "about_text": "",
         "products_found": "",
+        "matched_product_terms": "",
         "email_count": 0,
         "phone_count": 0,
         "has_whatsapp": 0,
         "has_product_page": 0,
         "has_contact_page": 0,
         "summary": "",
+        "emails": [],
+        "phones": [],
+        "whatsapps": [],
     }
 
     if not website or not website.startswith("http"):
@@ -51,12 +61,7 @@ def run_diligence(lead_id: int, website: str) -> dict:
 
     try:
         time.sleep(random.uniform(1.0, 2.0))
-        resp = requests.get(
-            website,
-            headers={"User-Agent": random.choice(USER_AGENTS)},
-            timeout=REQUEST_TIMEOUT,
-            allow_redirects=True,
-        )
+        resp = _request(website, timeout=REQUEST_TIMEOUT)
         if resp.status_code != 200:
             result["summary"] = f"官网无法访问 (HTTP {resp.status_code})"
             return result
@@ -90,33 +95,100 @@ def run_diligence(lead_id: int, website: str) -> dict:
         )
         result["has_contact_page"] = 1 if has_contact else 0
 
-        # Try to fetch About page
-        about_links = soup.find_all("a", href=re.compile(r"/about[/-]?", re.I))
-        for a_link in about_links[:2]:
-            about_url = a_link.get("href", "")
-            if about_url and not about_url.startswith("http"):
-                about_url = urljoin(website, about_url)
-            if about_url:
-                try:
-                    time.sleep(random.uniform(0.5, 1.0))
-                    ar = requests.get(about_url, headers={"User-Agent": random.choice(USER_AGENTS)}, timeout=10)
-                    if ar.status_code == 200:
-                        ar.encoding = ar.apparent_encoding or "utf-8"
-                        asoup = BeautifulSoup(ar.text, "lxml" if _has_lxml() else "html.parser")
-                        result["about_text"] = asoup.get_text(separator=" ", strip=True)[:1000]
-                        break
-                except Exception:
-                    pass
+        # Fetch a few public About/Contact pages. Contact details frequently do
+        # not appear on the homepage, so all fetched HTML participates in
+        # extraction.
+        page_htmls = [html]
+        detail_links: list[tuple[str, str]] = []
+        for a_link in soup.find_all("a", href=True):
+            href = a_link.get("href", "")
+            label = a_link.get_text(" ", strip=True)
+            candidate = f"{href} {label}"
+            match = re.search(
+                r"(about|company|contact|enquiry|inquiry|reach|"
+                r"product|catalog|category)",
+                candidate,
+                re.I,
+            )
+            if not match:
+                continue
+            detail_url = urljoin(website, href)
+            if urlparse(detail_url).netloc != urlparse(website).netloc:
+                continue
+            if detail_url not in [url for url, _ in detail_links]:
+                detail_links.append((detail_url, match.group(1).lower()))
+
+        detail_links.sort(
+            key=lambda item: (
+                0 if item[1] in ("product", "catalog", "category") else 1
+            )
+        )
+        product_page_count = 0
+        info_page_count = 0
+        selected_detail_links: list[tuple[str, str]] = []
+        for detail_url, page_kind in detail_links:
+            is_product_page = page_kind in ("product", "catalog", "category")
+            if is_product_page and product_page_count < 3:
+                selected_detail_links.append((detail_url, page_kind))
+                product_page_count += 1
+            elif not is_product_page and info_page_count < 3:
+                selected_detail_links.append((detail_url, page_kind))
+                info_page_count += 1
+            if product_page_count >= 3 and info_page_count >= 3:
+                break
+
+        for detail_url, page_kind in selected_detail_links:
+            try:
+                time.sleep(random.uniform(0.3, 0.8))
+                detail_response = _request(detail_url, timeout=10)
+                if detail_response.status_code != 200:
+                    continue
+                detail_response.encoding = detail_response.apparent_encoding or "utf-8"
+                page_htmls.append(detail_response.text)
+                detail_soup = BeautifulSoup(
+                    detail_response.text, "lxml" if _has_lxml() else "html.parser"
+                )
+                if not result["about_text"] and page_kind in ("about", "company"):
+                    result["about_text"] = detail_soup.get_text(
+                        separator=" ", strip=True
+                    )[:1500]
+            except Exception:
+                continue
 
         # Extract contacts
-        contacts = extract_contacts_from_html(html, website)
+        contacts = extract_contacts_from_html("\n".join(page_htmls), website)
+        result["emails"] = contacts.get("emails", [])
+        result["phones"] = contacts.get("phones", [])
+        result["whatsapps"] = contacts.get("whatsapps", [])
         result["email_count"] = len(contacts.get("emails", []))
         result["phone_count"] = len(contacts.get("phones", []))
         result["has_whatsapp"] = 1 if contacts.get("whatsapps") else 0
 
         # Extract product keywords
-        keywords = extract_keywords_from_html(html, 5)
+        keywords = extract_keywords_from_html("\n".join(page_htmls), 5)
         result["products_found"] = ", ".join(keywords)
+        if isinstance(target_keywords, str):
+            target_terms = [
+                value.strip()
+                for value in re.split(r"[,，;\n]+", target_keywords)
+                if value.strip()
+            ]
+        else:
+            target_terms = [
+                value.strip() for value in target_keywords if value.strip()
+            ]
+        visible_text = " ".join(
+            BeautifulSoup(
+                page_html,
+                "lxml" if _has_lxml() else "html.parser",
+            ).get_text(" ", strip=True)
+            for page_html in page_htmls
+        ).lower()
+        matched_product_terms = list(dict.fromkeys(
+            term for term in target_terms
+            if term.lower() in visible_text
+        ))
+        result["matched_product_terms"] = ", ".join(matched_product_terms)
 
         # Generate summary
         parts = []
@@ -134,6 +206,10 @@ def run_diligence(lead_id: int, website: str) -> dict:
             parts.append("有WhatsApp")
         if keywords:
             parts.append(f"关键词: {', '.join(keywords[:3])}")
+        if matched_product_terms:
+            parts.append(
+                "目标产品命中: " + ", ".join(matched_product_terms[:3])
+            )
 
         result["summary"] = "；".join(parts) if parts else "官网信息较少"
 
@@ -147,6 +223,25 @@ def run_diligence(lead_id: int, website: str) -> dict:
         result["summary"] = f"背调过程出错：{str(e)[:100]}"
 
     return result
+
+
+def _request(url: str, timeout: int) -> requests.Response:
+    """Fetch a public page directly, through SOCKS, or through an edge relay."""
+    proxy = os.getenv("TRADELEAD_PROXY", "").strip().rstrip("/")
+    if not proxy:
+        try:
+            from src.db_v3 import get_setting
+            proxy = (get_setting("proxy_url") or "").strip().rstrip("/")
+        except Exception:
+            proxy = ""
+    headers = {"User-Agent": random.choice(USER_AGENTS)}
+    if proxy.startswith(("http://", "https://")):
+        url = f"{proxy}?{urlencode({'url': url})}"
+        return requests.get(url, headers=headers, timeout=timeout, allow_redirects=True)
+    proxies = {"http": proxy, "https": proxy} if proxy.startswith("socks") else None
+    return requests.get(
+        url, headers=headers, timeout=timeout, allow_redirects=True, proxies=proxies
+    )
 
 
 def rate_confidence(diligence_result: dict) -> str:
@@ -203,7 +298,14 @@ def batch_diligence(lead_ids: list[int], db_get_lead, db_save_diligence, db_upda
             confidence = rate_confidence(diligence)
             diligence["confidence"] = confidence
             db_save_diligence(diligence)
-            db_update_lead(lead_id, confidence=confidence, diligence_done=1)
+            db_update_lead(
+                lead_id,
+                confidence=confidence,
+                diligence_done=1,
+                email=", ".join(diligence.get("emails", [])),
+                phone=", ".join(diligence.get("phones", [])),
+                whatsapp=", ".join(diligence.get("whatsapps", [])),
+            )
 
             results[confidence] += 1
         except Exception:

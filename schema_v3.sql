@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS products (
     category TEXT,                              -- 品类（如"建筑五金"）
     sub_category TEXT,                          -- 子类目（如"保温锚固件"）
     keywords_en TEXT NOT NULL,                  -- 英文搜索关键词，逗号分隔
+    buyer_types TEXT DEFAULT '',                -- 推荐经销商/采购商类型，逗号分隔
+    end_user_types TEXT DEFAULT '',             -- 推荐终端客户类型，逗号分隔
+    exclude_terms TEXT DEFAULT '',              -- 搜索排除词，逗号分隔
+    analysis_reasoning TEXT DEFAULT '',          -- 产品解析说明
     description_cn TEXT,                        -- 中文描述
     description_en TEXT,                        -- 英文描述（用于开发信和落地页）
     specifications TEXT,                        -- 规格/型号
@@ -33,6 +37,7 @@ CREATE TABLE IF NOT EXISTS acquisition_tasks (
     product_id INTEGER NOT NULL,
     region TEXT,                                -- 大区域（中东/非洲/...）
     country TEXT,                               -- 目标国家
+    subregion TEXT,                             -- 州/省/行政区（可为空）
     city TEXT,                                  -- 目标城市（可为空）
     channel TEXT NOT NULL,                      -- 渠道：yellow_pages/google_search/whois/google_maps
     channel_source TEXT,                        -- 黄页具体网站名（如 europages）
@@ -55,7 +60,9 @@ CREATE TABLE IF NOT EXISTS leads (
     task_id INTEGER,
     company_name TEXT NOT NULL,                 -- 公司名
     country TEXT,                               -- 国家
+    subregion TEXT,                             -- 州/省/行政区
     city TEXT,                                  -- 城市
+    address TEXT,                               -- 公开地址
     website TEXT,                               -- 官网 URL
     email TEXT,                                 -- 邮箱
     phone TEXT,                                 -- 电话
@@ -81,7 +88,36 @@ CREATE INDEX IF NOT EXISTS idx_leads_country ON leads(country);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 
 -- ============================================================
--- 4. 背调结果
+-- 4. 产品级买家资格判定
+-- ============================================================
+CREATE TABLE IF NOT EXISTS lead_qualifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    buyer_role TEXT DEFAULT 'unknown',          -- channel_partner/end_user/mixed/unknown
+    verdict TEXT DEFAULT 'review',              -- qualified/promising/review/rejected
+    product_fit_score INTEGER DEFAULT 0,
+    channel_fit_score INTEGER DEFAULT 0,
+    end_user_fit_score INTEGER DEFAULT 0,
+    demand_signal_score INTEGER DEFAULT 0,
+    contactability_score INTEGER DEFAULT 0,
+    overall_score INTEGER DEFAULT 0,
+    reasons TEXT,                               -- JSON 字符串数组
+    evidence TEXT,                              -- JSON 证据数组
+    rejection_reasons TEXT,                     -- JSON 字符串数组
+    model_version TEXT DEFAULT 'buyer-qualification-v1.2',
+    evaluated_at TEXT DEFAULT (datetime('now','localtime')),
+    UNIQUE(lead_id, product_id),
+    FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_qualifications_product ON lead_qualifications(product_id);
+CREATE INDEX IF NOT EXISTS idx_qualifications_verdict ON lead_qualifications(verdict);
+CREATE INDEX IF NOT EXISTS idx_qualifications_score ON lead_qualifications(overall_score);
+
+-- ============================================================
+-- 5. 背调结果
 -- ============================================================
 CREATE TABLE IF NOT EXISTS due_diligence (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,6 +126,7 @@ CREATE TABLE IF NOT EXISTS due_diligence (
     website_title TEXT,                         -- 官网标题
     about_text TEXT,                            -- About 页面内容摘要
     products_found TEXT,                        -- 官网产品关键词
+    matched_product_terms TEXT,                 -- 与当前产品画像命中的官网词
     email_count INTEGER DEFAULT 0,              -- 提取到的邮箱数
     phone_count INTEGER DEFAULT 0,              -- 提取到的电话数
     has_whatsapp INTEGER DEFAULT 0,             -- 是否有 WhatsApp
@@ -101,7 +138,7 @@ CREATE TABLE IF NOT EXISTS due_diligence (
 );
 
 -- ============================================================
--- 5. 开发信
+-- 6. 开发信
 -- ============================================================
 CREATE TABLE IF NOT EXISTS outreach (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,7 +155,7 @@ CREATE TABLE IF NOT EXISTS outreach (
 );
 
 -- ============================================================
--- 6. 系统设置
+-- 7. 系统设置
 -- ============================================================
 CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
