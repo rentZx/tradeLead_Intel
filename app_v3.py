@@ -27,7 +27,7 @@ st.set_page_config(
 
 # ── Database init ──────────────────────────────────────────
 from src.db_v3 import (
-    init_db, add_product, get_products, get_product, delete_product,
+    init_db, add_product, get_products, get_product, update_product, delete_product,
     add_lead, get_leads, update_lead, count_leads,
     create_task, update_task, get_tasks,
     save_diligence, get_diligence,
@@ -49,13 +49,8 @@ from src.product_intelligence import analyze_product
 from src.qualification import (
     backfill_missing_qualifications,
     evaluate_and_save,
+    reevaluate_product_leads,
 )
-
-# Initialize database on first run
-if "db_initialized" not in st.session_state:
-    init_db()
-    backfill_missing_qualifications()
-    st.session_state.db_initialized = True
 
 def page_header(title: str, subtitle: str, icon: str) -> None:
     """Render a consistent workspace page header."""
@@ -84,6 +79,225 @@ def render_profile_items(value: str | None, empty_text: str = "尚未配置") ->
         st.markdown(f"- {item}")
 
 
+def normalize_profile_text(value: str | None) -> str:
+    """Store free-form profile lists in a consistent comma-delimited format."""
+    normalized = (value or "").replace("，", ",").replace("；", ",")
+    items = [
+        item.strip()
+        for line in normalized.splitlines()
+        for item in line.split(",")
+        if item.strip()
+    ]
+    return ", ".join(dict.fromkeys(items))
+
+
+def regenerated_product_data(product: dict) -> tuple[dict, object]:
+    """Return an updated product record with a freshly inferred buyer profile."""
+    profile = analyze_product(
+        product_name_cn=product.get("product_name_cn", ""),
+        product_name_en=product.get("product_name_en", ""),
+        category=product.get("category", ""),
+        sub_category=product.get("sub_category", ""),
+        description=(
+            f"{product.get('description_cn', '')} "
+            f"{product.get('description_en', '')}"
+        ),
+        keywords_en=product.get("keywords_en", ""),
+        buyer_types="",
+        end_user_types="",
+        exclude_terms="",
+    )
+    updated = {
+        **product,
+        "product_name_en": profile.product_name_en,
+        "category": profile.category,
+        "sub_category": profile.sub_category,
+        "keywords_en": ", ".join(profile.keywords_en),
+        "buyer_types": ", ".join(profile.buyer_types),
+        "end_user_types": ", ".join(profile.end_user_types),
+        "exclude_terms": ", ".join(profile.exclude_terms),
+        "analysis_reasoning": profile.reasoning,
+    }
+    return updated, profile
+
+
+def save_product_and_reevaluate(
+    product_id: int,
+    product_data: dict,
+    reevaluate: bool,
+) -> int:
+    update_product(product_id, product_data)
+    return reevaluate_product_leads(product_id) if reevaluate else 0
+
+
+@st.dialog(
+    "编辑产品与买家画像",
+    width="large",
+    icon=":material/edit:",
+)
+def edit_product_dialog(product_id: int) -> None:
+    product = get_product(product_id)
+    if not product:
+        st.error("产品不存在或已被删除")
+        return
+
+    st.caption(
+        "修改不会改变产品 ID，也不会删除已有线索。"
+        "“自动重新解析并保存”会覆盖三个画像字段。"
+    )
+    with st.form(f"edit_product_{product_id}"):
+        basic_left, basic_right = st.columns(2)
+        with basic_left:
+            name_cn = st.text_input(
+                "中文产品名 *",
+                value=product.get("product_name_cn", ""),
+                key=f"edit_name_cn_{product_id}",
+            )
+            category = st.text_input(
+                "品类",
+                value=product.get("category", ""),
+                key=f"edit_category_{product_id}",
+            )
+            sub_category = st.text_input(
+                "子类目",
+                value=product.get("sub_category", ""),
+                key=f"edit_sub_category_{product_id}",
+            )
+            description_cn = st.text_area(
+                "中文描述",
+                value=product.get("description_cn", ""),
+                key=f"edit_description_cn_{product_id}",
+            )
+            specifications = st.text_input(
+                "规格 / 型号",
+                value=product.get("specifications", ""),
+                key=f"edit_specifications_{product_id}",
+            )
+            fob_price = st.number_input(
+                "FOB 报价（USD）",
+                min_value=0.0,
+                step=0.001,
+                format="%.3f",
+                value=float(product.get("fob_price") or 0),
+                key=f"edit_fob_{product_id}",
+            )
+        with basic_right:
+            name_en = st.text_input(
+                "英文产品名 *",
+                value=product.get("product_name_en", ""),
+                key=f"edit_name_en_{product_id}",
+            )
+            keywords = st.text_area(
+                "英文搜索关键词 *",
+                value=product.get("keywords_en", ""),
+                help="可使用逗号或换行分隔",
+                key=f"edit_keywords_{product_id}",
+            )
+            description_en = st.text_area(
+                "英文描述",
+                value=product.get("description_en", ""),
+                key=f"edit_description_en_{product_id}",
+            )
+            material = st.text_input(
+                "材质",
+                value=product.get("material", ""),
+                key=f"edit_material_{product_id}",
+            )
+            moq = st.text_input(
+                "起订量（MOQ）",
+                value=product.get("moq", ""),
+                key=f"edit_moq_{product_id}",
+            )
+
+        st.markdown("#### 买家资格画像")
+        profile_cols = st.columns(3)
+        with profile_cols[0]:
+            buyer_types = st.text_area(
+                "经销渠道",
+                value="\n".join(csv_values(product.get("buyer_types"))),
+                height=190,
+                help="销售、进口、批发或代理该产品的商家类型",
+                key=f"edit_buyers_{product_id}",
+            )
+        with profile_cols[1]:
+            end_user_types = st.text_area(
+                "终端需求方",
+                value="\n".join(csv_values(product.get("end_user_types"))),
+                height=190,
+                help="实际采购并使用该产品的企业类型",
+                key=f"edit_end_users_{product_id}",
+            )
+        with profile_cols[2]:
+            exclude_terms = st.text_area(
+                "排除对象",
+                value="\n".join(csv_values(product.get("exclude_terms"))),
+                height=190,
+                help="名称相似但不属于目标客户的行业或关键词",
+                key=f"edit_excludes_{product_id}",
+            )
+
+        reevaluate = st.checkbox(
+            "保存后重新评估该产品已有线索",
+            value=True,
+            help="只重新计算现有公开资料，不会产生搜索 API 费用",
+            key=f"edit_reevaluate_{product_id}",
+        )
+        action_cols = st.columns(2)
+        save_manual = action_cols[0].form_submit_button(
+            "保存修改",
+            width="stretch",
+            type="primary",
+            icon=":material/save:",
+        )
+        regenerate = action_cols[1].form_submit_button(
+            "自动重新解析并保存",
+            width="stretch",
+            icon=":material/auto_awesome:",
+        )
+
+    if not (save_manual or regenerate):
+        return
+    if not name_cn.strip():
+        st.error("中文产品名不能为空")
+        return
+
+    edited_product = {
+        **product,
+        "product_name_cn": name_cn.strip(),
+        "product_name_en": name_en.strip(),
+        "category": category.strip(),
+        "sub_category": sub_category.strip(),
+        "keywords_en": normalize_profile_text(keywords),
+        "buyer_types": normalize_profile_text(buyer_types),
+        "end_user_types": normalize_profile_text(end_user_types),
+        "exclude_terms": normalize_profile_text(exclude_terms),
+        "description_cn": description_cn.strip(),
+        "description_en": description_en.strip(),
+        "specifications": specifications.strip(),
+        "material": material.strip(),
+        "fob_price": fob_price,
+        "moq": moq.strip(),
+    }
+    if regenerate:
+        edited_product, profile = regenerated_product_data(edited_product)
+    elif not edited_product["product_name_en"] or not edited_product["keywords_en"]:
+        st.error("英文产品名和英文搜索关键词不能为空")
+        return
+
+    with st.spinner("正在保存产品并更新买家资格..."):
+        evaluated = save_product_and_reevaluate(
+            product_id,
+            edited_product,
+            reevaluate,
+        )
+    action = "已重新解析画像并保存" if regenerate else "修改已保存"
+    st.session_state.product_feedback = (
+        f"{action}；产品 ID 保持为 {product_id}"
+        + (f"，已重新评估 {evaluated} 条线索。" if reevaluate else "。")
+    )
+    st.rerun()
+
+
 @st.dialog("删除产品")
 def confirm_product_delete(product_id: int, product_name: str) -> None:
     st.write(f"确定删除“{product_name}”吗？此操作无法撤销。")
@@ -99,6 +313,35 @@ def confirm_product_delete(product_id: int, product_name: str) -> None:
             delete_product(product_id)
             st.toast("产品已删除", icon=":material/check_circle:")
             st.rerun()
+
+
+# Initialize the schema and upgrade legacy products once per browser session.
+if "db_initialized" not in st.session_state:
+    init_db()
+    upgraded_products = 0
+    upgraded_leads = 0
+    for existing_product in get_products():
+        if (
+            not existing_product.get("buyer_types")
+            and not existing_product.get("end_user_types")
+        ):
+            regenerated, generated_profile = regenerated_product_data(
+                existing_product
+            )
+            if generated_profile.product_name_en and generated_profile.keywords_en:
+                update_product(existing_product["id"], regenerated)
+                upgraded_products += 1
+                upgraded_leads += reevaluate_product_leads(
+                    existing_product["id"]
+                )
+    backfill_missing_qualifications()
+    if upgraded_products:
+        st.session_state.product_feedback = (
+            f"已自动补全 {upgraded_products} 个旧产品的买家画像，"
+            f"并重新评估 {upgraded_leads} 条线索。"
+        )
+    st.session_state.db_initialized = True
+
 
 # ═══════════════════════════════════════════════════════════
 #  Navigation
@@ -290,6 +533,8 @@ elif page == "产品":
         "管理产品资料，并自动推导适合推广的经销渠道和终端需求方。",
         "inventory_2",
     )
+    if feedback := st.session_state.pop("product_feedback", None):
+        st.success(feedback, icon=":material/check_circle:")
 
     with st.container(horizontal=True):
         st.metric("产品总数", len(products), border=True)
@@ -319,7 +564,7 @@ elif page == "产品":
             for p in products:
                 with st.container(border=True):
                     title_col, action_col = st.columns(
-                        [5, 1], vertical_alignment="center"
+                        [4.5, 2.5], vertical_alignment="center"
                     )
                     with title_col:
                         st.subheader(p["product_name_cn"])
@@ -334,15 +579,57 @@ elif page == "产品":
                             if p.get("moq"):
                                 st.badge(f"MOQ {p['moq']}", color="orange")
                     with action_col:
-                        if st.button(
-                            "删除",
-                            key=f"del_{p['id']}",
-                            icon=":material/delete:",
-                            width="stretch",
+                        with st.container(
+                            horizontal=True,
+                            horizontal_alignment="right",
                         ):
-                            confirm_product_delete(
-                                p["id"], p.get("product_name_cn") or "未命名产品"
-                            )
+                            if st.button(
+                                "编辑",
+                                key=f"edit_{p['id']}",
+                                icon=":material/edit:",
+                            ):
+                                edit_product_dialog(p["id"])
+                            if st.button(
+                                "重新解析",
+                                key=f"regenerate_{p['id']}",
+                                icon=":material/auto_awesome:",
+                                help=(
+                                    "重新生成关键词、经销渠道、终端需求方和排除对象，"
+                                    "并更新已有线索评分"
+                                ),
+                            ):
+                                regenerated, profile = regenerated_product_data(p)
+                                if (
+                                    not profile.product_name_en
+                                    or not profile.keywords_en
+                                ):
+                                    st.error(
+                                        "无法自动识别该产品，请先编辑并补充英文名称或关键词。"
+                                    )
+                                else:
+                                    with st.spinner(
+                                        "正在重新生成画像并评估已有线索..."
+                                    ):
+                                        evaluated = save_product_and_reevaluate(
+                                            p["id"],
+                                            regenerated,
+                                            True,
+                                        )
+                                    st.session_state.product_feedback = (
+                                        "买家画像已重新生成；"
+                                        f"产品 ID 保持为 {p['id']}，"
+                                        f"已重新评估 {evaluated} 条线索。"
+                                    )
+                                    st.rerun()
+                            if st.button(
+                                "删除",
+                                key=f"del_{p['id']}",
+                                icon=":material/delete:",
+                            ):
+                                confirm_product_delete(
+                                    p["id"],
+                                    p.get("product_name_cn") or "未命名产品",
+                                )
 
                     profile_cols = st.columns(3)
                     with profile_cols[0].container(height="stretch"):

@@ -379,6 +379,17 @@ def main() -> None:
         )
         saved = db.get_product(product_id)
         assert saved and "hardware store" in saved["buyer_types"]
+        db.update_product(
+            product_id,
+            {
+                **saved,
+                "buyer_types": saved["buyer_types"] + ", specialist dealer",
+            },
+        )
+        updated_product = db.get_product(product_id)
+        assert updated_product
+        assert updated_product["id"] == product_id
+        assert "specialist dealer" in updated_product["buyer_types"]
         assert any(
             column["name"] == "address" for column in db.query("PRAGMA table_info(leads)")
         )
@@ -444,6 +455,9 @@ def main() -> None:
         assert enriched["email"] == "sales@verified.example"
         assert enriched["whatsapp"] == "https://wa.me/6621234567"
         assert "Distributor" in enriched["business_summary"]
+        from src.qualification import reevaluate_product_leads
+
+        assert reevaluate_product_leads(product_id) == 1
 
         registry_lead = ChannelLead(
             company_name="Registered Building Supply",

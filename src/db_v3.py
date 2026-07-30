@@ -142,6 +142,37 @@ def get_product(product_id: int) -> dict | None:
     return rows[0] if rows else None
 
 
+def update_product(product_id: int, data: dict) -> int:
+    """Update an existing product without changing its ID or relationships."""
+    return update(
+        """UPDATE products
+              SET product_name_cn=?, product_name_en=?, category=?, sub_category=?,
+                  keywords_en=?, buyer_types=?, end_user_types=?, exclude_terms=?,
+                  analysis_reasoning=?, description_cn=?, description_en=?,
+                  specifications=?, material=?, fob_price=?, moq=?, image_paths=?
+            WHERE id=?""",
+        (
+            data["product_name_cn"],
+            data["product_name_en"],
+            data.get("category", ""),
+            data.get("sub_category", ""),
+            data["keywords_en"],
+            data.get("buyer_types", ""),
+            data.get("end_user_types", ""),
+            data.get("exclude_terms", ""),
+            data.get("analysis_reasoning", ""),
+            data.get("description_cn", ""),
+            data.get("description_en", ""),
+            data.get("specifications", ""),
+            data.get("material", ""),
+            data.get("fob_price", 0),
+            data.get("moq", ""),
+            data.get("image_paths", ""),
+            product_id,
+        ),
+    )
+
+
 def delete_product(product_id: int):
     update("DELETE FROM products WHERE id = ?", (product_id,))
 

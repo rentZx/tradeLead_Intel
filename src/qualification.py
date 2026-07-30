@@ -354,6 +354,27 @@ def evaluate_and_save(
     return result
 
 
+def reevaluate_product_leads(product_id: int) -> int:
+    """Re-score leads already associated with a product."""
+    from src.db_v3 import query
+
+    rows = query(
+        """SELECT DISTINCT lead_id
+             FROM lead_qualifications
+            WHERE product_id=?
+            UNION
+           SELECT DISTINCT l.id AS lead_id
+             FROM leads l
+             JOIN acquisition_tasks t ON t.id=l.task_id
+            WHERE t.product_id=?""",
+        (product_id, product_id),
+    )
+    return sum(
+        bool(evaluate_and_save(row["lead_id"], product_id))
+        for row in rows
+    )
+
+
 def backfill_missing_qualifications() -> int:
     from src.db_v3 import query
 
